@@ -1,0 +1,36 @@
+Thống nhất các nút bấm dưới màn hình từ màn hình 2: "Trang chủ", "Chi
+tiết", "Đi chợ", "Bí kíp" Màn hình 2: Homepage (home.dart) +) Gợi ý món
+ngon - Hiển thị các món được đánh dấu nổi bật - Loại bỏ dòng chữ "Xem
+tất cả" cạnh dòng chữ "Gợi ý món ngon" +) Bộ sưu tập - Thêm nút 'Xem tất
+cả ' để xem tất cả bộ sưu tập - Có thể thực hiện chức năng CRUD bộ sưu
+tập - Khi bấm vào 1 trong các bộ sưu tập thì hiển thị các món ăn của bộ
+sưu tập đó - Có nút dấu '+' để thực hiện thêm món ăn tùy ý (CRUD được)
++) Món ngon phải thử - Hiển thị 3 món ăn được tạo mới nhất  - Thêm nút
+'Xem tất cả ' để xem tất cả món ăn - Khi bấm vào Xem tất cả sẽ hiển thị
+tất cả các món ăn, có nút dấu '+' ở góc phải màn hình để thêm món ăn (có
+thể thực hiện CRUD món ăn, có thể đưa vào bộ sưu tập nếu muốn)
+
+Màn hình 3: Công thức chi tiết (recipe_details.dart) - Khi bấm 1 nút thủ
+công mà chuyển đến trang này thì Nguyên liệu, cách làm chưa hiển thị khi
+không có dữ liệu món ăn, có nút chọn món ăn để chọn món ăn hiện có, thực
+hiện CRUD cho Nguyên liệu và cách làm - Khi bấm vào món ăn từ hình 2 sẽ
+chuyển sang trang công thức chi tiết (lấy nguyên hình ảnh, tên món ăn,
+mô tả từ màn hình 2) (label hẹn giờ theo bước, nếu bấm hẹn giờ thì
+banner đếm giờ sẽ hiện ở bước đó và bấm bắt đầu tính giờ nếu muốn) - Nút
+"Bắt đầu nấu ngay" khi bấm sẽ đếm ngược toàn bộ thời gian ước tính của
+các bước - Bí kíp gia truyền: Có title và nội dung, CRUD được. Nếu lưu
+thành công sẽ hiển thị tại màn hình 5
+
+Màn hình 4: Danh sách đi chợ (shopping_lists.dart) - Khi bấm 1 nút thủ
+công mà chuyển đến trang này thì hiển thị "Hãy chọn món ăn để đi chợ"
+khi không có dữ liệu món ăn, có nút chọn món ăn để chọn món ăn hiện có,
+và hiển thị tất cả nguyên liệu tương ứng với mỗi món ăn đã đã chọn Cho
+phép chỉnh sửa từng nguyên liệu theo ý muốn Khi chỉnh sửa giá ước tính,
+giá thực chi thì label "Ngân sách dự kiến" cũng phải cập nhật theo
+
+Màn hình 5: Bí kíp gia truyền (family_secret.dart)
+
+Hiển thị bí kíp gia truyền đã ghi ở màn hình 3, có thể thực hiện CRUD
+được. Nếu lưu thành công thì khi khi bấm vào màn hình 3, phần "Bí kíp
+gia truyền" sẽ được đồng bộ Có thể tự tạo bí kíp riêng cho từng món (khi
+thực hiện điều này đồng nghĩa với việc món ăn này sẽ được tạo)
