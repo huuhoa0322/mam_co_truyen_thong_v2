@@ -54,8 +54,6 @@ class _ShoppingListsPageState extends State<ShoppingListsPage> {
     ),
   ];
 
-  int _selectedNavIndex = 1;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,7 +66,7 @@ class _ShoppingListsPageState extends State<ShoppingListsPage> {
               _buildHeader(),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.only(bottom: 140),
+                  padding: const EdgeInsets.only(bottom: 40),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
                     child: Column(
@@ -86,19 +84,6 @@ class _ShoppingListsPageState extends State<ShoppingListsPage> {
                 ),
               ),
             ],
-          ),
-          // FAB
-          Positioned(
-            bottom: 100,
-            right: 24,
-            child: _buildFAB(),
-          ),
-          // Bottom nav
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _buildBottomNav(),
           ),
         ],
       ),
@@ -663,106 +648,6 @@ class _ShoppingListsPageState extends State<ShoppingListsPage> {
     );
   }
 
-  // ── FAB ─────────────────────────────────────────────────────────
-  Widget _buildFAB() {
-    return Container(
-      width: 56,
-      height: 56,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: primary,
-        boxShadow: [
-          BoxShadow(
-            color: primary.withValues(alpha: 0.3),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(
-          color: const Color(0xFFFACC15).withValues(alpha: 0.5),
-          width: 2,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        shape: const CircleBorder(),
-        child: InkWell(
-          onTap: () {},
-          customBorder: const CircleBorder(),
-          child: const Center(
-            child: Icon(Icons.post_add, color: Colors.white, size: 26),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ── Bottom Navigation ───────────────────────────────────────────
-  Widget _buildBottomNav() {
-    final items = [
-      _NavItem(icon: Icons.home, label: 'Trang Chủ'),
-      _NavItem(icon: Icons.list_alt, label: 'Danh Sách'),
-      _NavItem(icon: Icons.menu_book, label: 'Công Thức'),
-      _NavItem(icon: Icons.person, label: 'Cá Nhân'),
-    ];
-
-    return Container(
-      decoration: BoxDecoration(
-        color: surfaceLight,
-        border: const Border(
-          top: BorderSide(color: Color(0xFFFEE2E2)),
-        ),
-      ),
-      padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 12,
-        bottom: MediaQuery.of(context).padding.bottom + 12,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: List.generate(items.length, (index) {
-          final item = items[index];
-          final isSelected = index == _selectedNavIndex;
-          return InkWell(
-            onTap: () {
-              setState(() {
-                _selectedNavIndex = index;
-              });
-              if (index == 0) {
-                Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
-              } else if (index == 2) {
-                Navigator.of(context).pushNamed('/recipe_details');
-              }
-            },
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    item.icon,
-                    size: 26,
-                    color: isSelected ? primary : Colors.grey.shade400,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    item.label,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      color: isSelected ? primary : Colors.grey.shade400,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }),
-      ),
-    );
-  }
 }
 
 // ── Data Models ─────────────────────────────────────────────────

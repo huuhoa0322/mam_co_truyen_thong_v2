@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../domain/entities/dish.dart';
 import '../../../domain/entities/category.dart';
+import 'package:provider/provider.dart';
+import '../../../viewmodels/home/home_view_model.dart';
 
 const _tetGold = Color(0xFFFFD700);
 const _tetCream = Color(0xFFFFFDD0);
@@ -46,6 +48,7 @@ class _FeaturedDishesWidgetState extends State<FeaturedDishesWidget> {
           // Hero card
           GestureDetector(
             onTap: () {},
+            onLongPress: () => _showDishOptionsDialog(context, featuredDish),
             child: Container(
               height: 320,
               decoration: BoxDecoration(
@@ -221,6 +224,96 @@ class _FeaturedDishesWidgetState extends State<FeaturedDishesWidget> {
           style: TextStyle(color: _tetCream.withValues(alpha: 0.9), fontSize: 13),
         ),
       ],
+    );
+  }
+
+  void _showDishOptionsDialog(BuildContext context, Dish dish) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(dish.name),
+        content: const Text('Tùy chọn cho món ăn nổi bật:'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _showEditDishDialog(context, dish);
+            },
+            child: const Text('Sửa'),
+          ),
+          TextButton(
+            onPressed: () {
+              context.read<HomeViewModel>().deleteDish(dish.id!);
+              Navigator.pop(ctx);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Xóa'),
+          ),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đóng')),
+        ],
+      ),
+    );
+  }
+
+  void _showEditDishDialog(BuildContext context, Dish dish) {
+    final categories = context.read<HomeViewModel>().categories;
+    final nameController = TextEditingController(text: dish.name);
+    final descController = TextEditingController(text: dish.description ?? '');
+    final timeController = TextEditingController(text: dish.cookTimeMinutes.toString());
+    int? selectedCategory = dish.categoryId;
+    bool isFeatured = dish.isFeatured;
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogCtx, setState) {
+          return AlertDialog(
+            title: const Text('Sửa món ăn nổi bật'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Tên món ăn (Bắt buộc)')),
+                  TextField(controller: descController, decoration: const InputDecoration(labelText: 'Mô tả')),
+                  TextField(controller: timeController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Thời gian (phút)')),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<int>(
+                    value: selectedCategory,
+                    decoration: const InputDecoration(labelText: 'Bộ sưu tập'),
+                    items: categories.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))).toList(),
+                    onChanged: (val) => setState(() => selectedCategory = val),
+                  ),
+                  SwitchListTile(
+                    title: const Text('Đánh dấu Gợi ý món ngon'),
+                    contentPadding: EdgeInsets.zero,
+                    value: isFeatured,
+                    onChanged: (val) => setState(() => isFeatured = val),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+              ElevatedButton(
+                onPressed: () {
+                  if (nameController.text.isNotEmpty) {
+                    final updatedDish = dish.copyWith(
+                      name: nameController.text,
+                      description: descController.text,
+                      cookTimeMinutes: int.tryParse(timeController.text) ?? dish.cookTimeMinutes,
+                      categoryId: selectedCategory,
+                      isFeatured: isFeatured,
+                    );
+                    context.read<HomeViewModel>().updateDish(updatedDish);
+                  }
+                  Navigator.pop(ctx);
+                },
+                child: const Text('Lưu'),
+              ),
+            ],
+          );
+        }
+      ),
     );
   }
 }

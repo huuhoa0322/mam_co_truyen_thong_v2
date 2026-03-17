@@ -4,6 +4,7 @@ import 'package:mam_co_truyen_thong_v2/views/home/home.dart';
 import 'package:mam_co_truyen_thong_v2/views/recipe_details/recipe_details.dart';
 import 'package:mam_co_truyen_thong_v2/views/shopping_lists/shopping_lists.dart';
 import 'package:mam_co_truyen_thong_v2/views/family_secret/family_secret.dart';
+import 'package:mam_co_truyen_thong_v2/views/main_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -24,7 +25,7 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const StartedScreen(),
-        '/home': (context) => const HomeScreen(),
+        '/home': (context) => const MainScreen(),
         '/recipe_details': (context) => const RecipeDetailsPage(),
         '/shopping_lists': (context) => const ShoppingListsPage(),
         '/family_secret': (context) => const FamilySecretPage(),

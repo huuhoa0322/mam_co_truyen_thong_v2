@@ -24,8 +24,6 @@ class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
-  int _selectedNav = 0;
-
   @override
   void initState() {
     super.initState();
@@ -88,13 +86,6 @@ class _HomeScreenState extends State<HomeScreen>
                   );
                 },
               ),
-            ),
-            // Bottom nav
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: _buildBottomNav(),
             ),
           ],
         ),
@@ -248,95 +239,4 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
 
-  // ── Bottom nav ────────────────────────────────────────────────────────────
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: _tetRed.withValues(alpha: 0.95),
-        border: Border(
-            top: BorderSide(color: _tetGold.withValues(alpha: 0.3), width: 1)),
-        boxShadow: const [
-          BoxShadow(
-              color: Colors.black45, blurRadius: 10,
-              offset: Offset(0, -5)),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 64,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _navItem(Icons.home, 'Trang Chủ', 0),
-              _navItem(Icons.auto_stories, 'Bí Kíp', 1, route: '/family_secret'),
-              // Center FAB
-              GestureDetector(
-                onTap: () => Navigator.of(context).pushNamed('/recipe_details'),
-                child: Transform.translate(
-                  offset: const Offset(0, -20),
-                  child: Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFFD700), Color(0xFFEAB308)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: _tetRed, width: 4),
-                      boxShadow: [
-                        BoxShadow(
-                          color: _tetGold.withValues(alpha: 0.5),
-                          blurRadius: 15,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child: const Icon(Icons.restaurant_menu,
-                        color: _tetRed, size: 28),
-                  ),
-                ),
-              ),
-              _navItem(Icons.shopping_cart_outlined, 'Đi Chợ', 3, route: '/shopping_lists'),
-              _navItem(Icons.person_outline, 'Cá Nhân', 4),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _navItem(IconData icon, String label, int index, {String? route}) {
-    final isActive = _selectedNav == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() => _selectedNav = index);
-        if (route != null) {
-          Navigator.of(context).pushNamed(route);
-        }
-      },
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            color: isActive ? _tetGold : _tetCream.withValues(alpha: 0.5),
-            size: 24,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight:
-                  isActive ? FontWeight.bold : FontWeight.w500,
-              color: isActive ? _tetGold : _tetCream.withValues(alpha: 0.5),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

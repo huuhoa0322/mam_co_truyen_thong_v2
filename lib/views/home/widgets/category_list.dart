@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../../domain/entities/category.dart';
+import '../../../domain/entities/dish.dart';
+import 'package:provider/provider.dart';
+import '../../../viewmodels/home/home_view_model.dart';
 
+const _tetRed = Color(0xFF8B0000);
 const _tetRedLight = Color(0xFFA52A2A);
 const _tetGold = Color(0xFFFFD700);
+const _tetGoldDim = Color(0xFFC5A000);
 const _tetCream = Color(0xFFFFFDD0);
 
 class CategoryListWidget extends StatelessWidget {
@@ -30,7 +35,7 @@ class CategoryListWidget extends StatelessWidget {
                 ),
               ),
               GestureDetector(
-                onTap: () {},
+                onTap: () => _showAllCategoriesBottomSheet(context),
                 child: Text(
                   'Xem tất cả',
                   style: TextStyle(
@@ -52,9 +57,9 @@ class CategoryListWidget extends StatelessWidget {
             separatorBuilder: (_, _) => const SizedBox(width: 16),
             itemBuilder: (context, i) {
               if (i == 0) {
-                return _buildAddCategoryItem();
+                return _buildAddCategoryItem(context);
               }
-              return _buildCategoryItem(categories[i - 1]);
+              return _buildCategoryItem(context, categories[i - 1]);
             },
           ),
         ),
@@ -63,9 +68,9 @@ class CategoryListWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildAddCategoryItem() {
+  Widget _buildAddCategoryItem(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () => _showAddCategoryDialog(context),
       child: SizedBox(
         width: 80,
         child: Column(
@@ -103,9 +108,10 @@ class CategoryListWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryItem(Category cat) {
+  Widget _buildCategoryItem(BuildContext context, Category cat) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () => _showCategoryDishesBottomSheet(context, cat),
+      onLongPress: () => _showCategoryOptionsDialog(context, cat),
       child: SizedBox(
         width: 80,
         child: Column(
@@ -145,6 +151,366 @@ class CategoryListWidget extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showAddCategoryDialog(BuildContext context) {
+    final nameController = TextEditingController();
+    final imgController = TextEditingController(text: 'https://cdn-icons-png.flaticon.com/512/3565/3565418.png');
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Thêm Bộ sưu tập'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Tên danh mục')),
+            TextField(controller: imgController, decoration: const InputDecoration(labelText: 'Link hình ảnh')),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+          ElevatedButton(
+            onPressed: () {
+              if (nameController.text.isNotEmpty) {
+                context.read<HomeViewModel>().createCategory(nameController.text, imgController.text);
+              }
+              Navigator.pop(ctx);
+            },
+            child: const Text('Thêm'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCategoryOptionsDialog(BuildContext context, Category cat) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(cat.name),
+        content: const Text('Bạn muốn làm gì với danh mục này?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _showEditCategoryDialog(context, cat);
+            },
+            child: const Text('Sửa'),
+          ),
+          TextButton(
+            onPressed: () {
+              context.read<HomeViewModel>().deleteCategory(cat.id!);
+              Navigator.pop(ctx);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Xóa'),
+          ),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đóng')),
+        ],
+      ),
+    );
+  }
+
+  void _showEditCategoryDialog(BuildContext context, Category cat) {
+    final nameController = TextEditingController(text: cat.name);
+    final imgController = TextEditingController(text: cat.coverImageUrl);
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Sửa Danh mục'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Tên danh mục')),
+            TextField(controller: imgController, decoration: const InputDecoration(labelText: 'Link hình ảnh')),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+          ElevatedButton(
+            onPressed: () {
+              if (nameController.text.isNotEmpty) {
+                final updatedCategory = cat.copyWith(
+                  name: nameController.text,
+                  coverImageUrl: imgController.text,
+                );
+                context.read<HomeViewModel>().updateCategory(updatedCategory);
+              }
+              Navigator.pop(ctx);
+            },
+            child: const Text('Lưu'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAllCategoriesBottomSheet(BuildContext parentContext) {
+    showModalBottomSheet(
+      context: parentContext,
+      isScrollControlled: true,
+      backgroundColor: _tetRed,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          builder: (_, controller) {
+            return Column(
+              children: [
+                const SizedBox(height: 16),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: _tetCream.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Tất cả Bộ Sưu Tập',
+                  style: TextStyle(
+                    color: _tetGold,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: ListView.builder(
+                    controller: controller,
+                    itemCount: categories.length,
+                    itemBuilder: (context, index) {
+                      final cat = categories[index];
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundImage: NetworkImage(cat.coverImageUrl ?? ''),
+                          backgroundColor: _tetRedLight,
+                          onBackgroundImageError: (_, __) => const Icon(Icons.error),
+                        ),
+                        title: Text(cat.name, style: const TextStyle(color: _tetCream, fontWeight: FontWeight.bold)),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: _tetCream),
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                _showEditCategoryDialog(parentContext, cat);
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.redAccent),
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                parentContext.read<HomeViewModel>().deleteCategory(cat.id!);
+                              },
+                            ),
+                          ],
+                        ),
+                        onTap: () => Navigator.pop(ctx),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showCategoryDishesBottomSheet(BuildContext parentContext, Category cat) async {
+    final viewModel = parentContext.read<HomeViewModel>();
+    final dishes = await viewModel.getDishesByCategory(cat.id!);
+    
+    // ignore: use_build_context_synchronously
+    if (!parentContext.mounted) return;
+
+    showModalBottomSheet(
+      context: parentContext,
+      isScrollControlled: true,
+      backgroundColor: _tetRedLight,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.7,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (_, controller) {
+            return Column(
+              children: [
+                const SizedBox(height: 16),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: _tetCream.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Bộ sưu tập: ${cat.name}',
+                      style: const TextStyle(
+                        color: _tetGold,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.add_circle, color: _tetGold),
+                      onPressed: () {
+                        _showAddDishInCategoryDialog(parentContext, cat);
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (dishes.isEmpty)
+                  const Expanded(
+                    child: Center(
+                      child: Text('Chưa có món ăn nào trong bộ sưu tập này.', style: TextStyle(color: _tetCream)),
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: ListView.separated(
+                      controller: controller,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      itemCount: dishes.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final dish = dishes[index];
+                        return ListTile(
+                          contentPadding: const EdgeInsets.all(8),
+                          tileColor: Colors.black12,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: const BorderSide(color: _tetGoldDim),
+                          ),
+                          leading: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              dish.imageUrl ?? '',
+                              width: 60,
+                              height: 60,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(width: 60, height: 60, color: _tetRed),
+                            ),
+                          ),
+                          title: Text(dish.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          subtitle: Text('${dish.cookTimeMinutes} phút • ${dish.difficulty}', style: TextStyle(color: _tetCream.withValues(alpha: 0.8), fontSize: 12)),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: _tetGold),
+                                onPressed: () {
+                                  Navigator.pop(ctx);
+                                  // Can trigger showEditDishDialog here if we extract it outside, or just delegate 
+                                  // For simplicity we show a toast or implement edit dialog if needed
+                                  ScaffoldMessenger.of(parentContext).showSnackBar(const SnackBar(content: Text('Vui lòng sửa ở mục Món Ăn Mới')));
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.redAccent),
+                                onPressed: () {
+                                  Navigator.pop(ctx);
+                                  parentContext.read<HomeViewModel>().deleteDish(dish.id!);
+                                },
+                              ),
+                            ],
+                          ),
+                          onTap: () {
+                            Navigator.pop(ctx);
+                            Navigator.of(parentContext).pushNamed('/recipe_details');
+                          },
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showAddDishInCategoryDialog(BuildContext context, Category cat) {
+    final nameController = TextEditingController();
+    final descController = TextEditingController();
+    final timeController = TextEditingController(text: '30');
+    final imgController = TextEditingController(text: 'https://cdn-icons-png.flaticon.com/512/3565/3565418.png');
+    bool isFeatured = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogCtx, setState) {
+          return AlertDialog(
+            title: Text('Thêm món vào ${cat.name}'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Tên món ăn (Bắt buộc)')),
+                  TextField(controller: descController, decoration: const InputDecoration(labelText: 'Mô tả')),
+                  TextField(controller: timeController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Thời gian (phút)')),
+                  TextField(controller: imgController, decoration: const InputDecoration(labelText: 'Link hình ảnh')),
+                  const SizedBox(height: 12),
+                  SwitchListTile(
+                    title: const Text('Đánh dấu Gợi ý món ngon'),
+                    contentPadding: EdgeInsets.zero,
+                    value: isFeatured,
+                    onChanged: (val) => setState(() => isFeatured = val),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+              ElevatedButton(
+                onPressed: () {
+                  if (nameController.text.isNotEmpty) {
+                    final newDish = Dish(
+                      categoryId: cat.id,
+                      name: nameController.text,
+                      description: descController.text,
+                      cookTimeMinutes: int.tryParse(timeController.text) ?? 30,
+                      difficulty: 'Trung bình',
+                      isFeatured: isFeatured,
+                      imageUrl: imgController.text,
+                      createdAt: DateTime.now(),
+                      updatedAt: DateTime.now(),
+                    );
+                    context.read<HomeViewModel>().createDish(newDish);
+                  }
+                  Navigator.pop(ctx);
+                },
+                child: const Text('Thêm'),
+              ),
+            ],
+          );
+        }
       ),
     );
   }

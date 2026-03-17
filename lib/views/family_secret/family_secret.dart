@@ -18,7 +18,6 @@ class _FamilySecretPageState extends State<FamilySecretPage> {
   static const Color paper = Color(0xFFFFFDF5);
   static const Color sepia = Color(0xFF704214);
 
-  int _selectedNavIndex = 0;
   int _selectedFilterIndex = 0;
 
   final List<String> _filters = ['Tất cả', 'Bánh Chưng', 'Dưa Hành', 'Thịt Kho'];
@@ -35,7 +34,7 @@ class _FamilySecretPageState extends State<FamilySecretPage> {
               _buildHeader(),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.only(bottom: 140),
+                  padding: const EdgeInsets.only(bottom: 40),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Column(
@@ -55,19 +54,6 @@ class _FamilySecretPageState extends State<FamilySecretPage> {
                 ),
               ),
             ],
-          ),
-          // FAB
-          Positioned(
-            bottom: 100,
-            right: 24,
-            child: _buildFAB(),
-          ),
-          // Bottom nav
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _buildBottomNav(),
           ),
         ],
       ),
@@ -831,161 +817,4 @@ class _FamilySecretPageState extends State<FamilySecretPage> {
     );
   }
 
-  // ── FAB ──────────────────────────────────────────────────────────
-  Widget _buildFAB() {
-    return Container(
-      width: 56,
-      height: 56,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: primary,
-        border: Border.all(color: Color.fromRGBO(gold.r.round(), gold.g.round(), gold.b.round(), 0.6), width: 2),
-        boxShadow: [
-          BoxShadow(color: Color.fromRGBO(primary.r.round(), primary.g.round(), primary.b.round(), 0.4), blurRadius: 12, offset: const Offset(0, 4)),
-        ],
-        gradient: const LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          colors: [primary, Color(0xFF8B0000)],
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        shape: const CircleBorder(),
-        child: InkWell(
-          onTap: () {},
-          customBorder: const CircleBorder(),
-          child: const Center(
-            child: Icon(Icons.add, color: Colors.white, size: 30),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ── Bottom Navigation ───────────────────────────────────────────
-  Widget _buildBottomNav() {
-    final items = [
-      _NavItem(icon: Icons.menu_book, label: 'Bí kíp'),
-      _NavItem(icon: Icons.calendar_today, label: 'Lên lịch'),
-      _NavItem(icon: Icons.shopping_basket, label: 'Đi chợ'),
-      _NavItem(icon: Icons.account_circle, label: 'Cá nhân'),
-    ];
-
-    return Container(
-      decoration: BoxDecoration(
-        color: parchment,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
-        ),
-        boxShadow: const [
-          BoxShadow(color: Color(0x1A000000), blurRadius: 20, offset: Offset(0, -5)),
-        ],
-      ),
-      padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 12,
-        bottom: MediaQuery.of(context).padding.bottom + 12,
-      ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Top indicator
-          Positioned(
-            top: -12,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                width: 48,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: primary,
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(4),
-                    bottomRight: Radius.circular(4),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // First two items
-              ...List.generate(2, (index) {
-                final item = items[index];
-                final isSelected = index == _selectedNavIndex;
-                return InkWell(
-                  onTap: () => setState(() => _selectedNavIndex = index),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(item.icon, size: 24, color: isSelected ? primary : const Color(0xFF78716C)),
-                        const SizedBox(height: 4),
-                        Text(
-                          item.label,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected ? primary : const Color(0xFF78716C),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
-              // Spacer for FAB
-              const SizedBox(width: 32),
-              // Last two items
-              ...List.generate(2, (i) {
-                final index = i + 2;
-                final item = items[index];
-                final isSelected = index == _selectedNavIndex;
-                return InkWell(
-                  onTap: () {
-                    setState(() => _selectedNavIndex = index);
-                    if (index == 2) {
-                      Navigator.of(context).pushNamed('/shopping_lists');
-                    }
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(item.icon, size: 24, color: isSelected ? primary : const Color(0xFF78716C)),
-                        const SizedBox(height: 4),
-                        Text(
-                          item.label,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected ? primary : const Color(0xFF78716C),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Data Models ─────────────────────────────────────────────────
-class _NavItem {
-  final IconData icon;
-  final String label;
-
-  _NavItem({required this.icon, required this.label});
 }
