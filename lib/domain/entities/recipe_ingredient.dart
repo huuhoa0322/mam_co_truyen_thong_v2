@@ -21,34 +21,6 @@ class RecipeIngredient {
     this.updatedAt,
   });
 
-  factory RecipeIngredient.fromMap(Map<String, dynamic> map) {
-    return RecipeIngredient(
-      id: map['id'] as int?,
-      dishId: map['dish_id'] as int,
-      name: map['name'] as String,
-      amount: (map['amount'] as num).toDouble(),
-      unit: map['unit'] as String,
-      notes: map['notes'] as String?,
-      isChecked: map['is_checked'] == 1,
-      createdAt: map['created_at'] != null ? DateTime.parse(map['created_at']) : null,
-      updatedAt: map['updated_at'] != null ? DateTime.parse(map['updated_at']) : null,
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      if (id != null) 'id': id,
-      'dish_id': dishId,
-      'name': name,
-      'amount': amount,
-      'unit': unit,
-      if (notes != null) 'notes': notes,
-      'is_checked': isChecked ? 1 : 0,
-      if (createdAt != null) 'created_at': createdAt?.toIso8601String(),
-      if (updatedAt != null) 'updated_at': updatedAt?.toIso8601String(),
-    };
-  }
-
   RecipeIngredient copyWith({
     int? id,
     int? dishId,

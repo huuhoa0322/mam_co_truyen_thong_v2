@@ -541,7 +541,7 @@ class CategoryListWidget extends StatelessWidget {
                           ),
                           onTap: () {
                             Navigator.pop(ctx);
-                            Navigator.of(parentContext).pushNamed('/recipe_details');
+                            Navigator.of(parentContext).pushNamed('/recipe_details', arguments: dish);
                           },
                         );
                       },

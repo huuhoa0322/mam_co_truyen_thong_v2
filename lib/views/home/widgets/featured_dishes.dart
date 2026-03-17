@@ -60,7 +60,7 @@ class _FeaturedDishesWidgetState extends State<FeaturedDishesWidget> {
                   width: MediaQuery.of(context).size.width - 48,
                   child: GestureDetector(
                     onTap: () {
-                      Navigator.of(context).pushNamed('/recipe_details');
+                      Navigator.of(context).pushNamed('/recipe_details', arguments: dish);
                     },
                     onLongPress: () => _showDishOptionsDialog(context, dish),
                     child: Container(

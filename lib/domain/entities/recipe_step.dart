@@ -21,34 +21,6 @@ class RecipeStep {
     this.updatedAt,
   });
 
-  factory RecipeStep.fromMap(Map<String, dynamic> map) {
-    return RecipeStep(
-      id: map['id'] as int?,
-      dishId: map['dish_id'] as int,
-      stepNumber: map['step_number'] as int,
-      title: map['title'] as String,
-      description: map['description'] as String,
-      timerMinutes: map['timer_minutes'] as int?,
-      timerLabel: map['timer_label'] as String?,
-      createdAt: map['created_at'] != null ? DateTime.parse(map['created_at']) : null,
-      updatedAt: map['updated_at'] != null ? DateTime.parse(map['updated_at']) : null,
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      if (id != null) 'id': id,
-      'dish_id': dishId,
-      'step_number': stepNumber,
-      'title': title,
-      'description': description,
-      if (timerMinutes != null) 'timer_minutes': timerMinutes,
-      if (timerLabel != null) 'timer_label': timerLabel,
-      if (createdAt != null) 'created_at': createdAt?.toIso8601String(),
-      if (updatedAt != null) 'updated_at': updatedAt?.toIso8601String(),
-    };
-  }
-
   RecipeStep copyWith({
     int? id,
     int? dishId,

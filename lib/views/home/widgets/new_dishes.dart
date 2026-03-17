@@ -104,7 +104,7 @@ class _NewDishesWidgetState extends State<NewDishesWidget> {
     }
 
     return GestureDetector(
-      onTap: () => Navigator.of(context).pushNamed('/recipe_details'),
+      onTap: () => Navigator.of(context).pushNamed('/recipe_details', arguments: dish),
       onLongPress: () => _showDishOptionsDialog(context, dish),
       child: Container(
         padding: const EdgeInsets.all(12),
@@ -565,7 +565,7 @@ class _NewDishesWidgetState extends State<NewDishesWidget> {
                         ),
                         onTap: () {
                           Navigator.pop(ctx);
-                          Navigator.of(parentContext).pushNamed('/recipe_details');
+                          Navigator.of(parentContext).pushNamed('/recipe_details', arguments: dish);
                         },
                       );
                     },

@@ -14,7 +14,7 @@ Màn hình 2: Homepage (home.dart)
 - Khi bấm vào Xem tất cả sẽ hiển thị tất cả các món ăn, có nút dấu ‘+’ ở góc phải màn hình để thêm món ăn (có thể thực hiện CRUD món ăn, có thể đưa vào bộ sưu tập nếu muốn)
  
 Màn hình 3: Công thức chi tiết (recipe_details.dart)
-- Khi bấm 1 nút thủ công mà chuyển đến trang này thì Nguyên liệu, cách làm chưa hiển thị khi không có dữ liệu món ăn, có nút chọn món ăn để chọn món ăn hiện có, thực hiện CRUD cho Nguyên liệu và cách làm
+- Khi từ màn hình Trang chủ hoặc các màn hình khác mà chuyển đến trang này thì Nguyên liệu, cách làm chưa hiển thị khi không có dữ liệu món ăn, có nút chọn món ăn để chọn món ăn hiện có, thực hiện CRUD cho Nguyên liệu và cách làm
 - Khi bấm vào món ăn từ hình 2 sẽ chuyển sang trang công thức chi tiết (lấy nguyên hình ảnh, tên món ăn, mô tả từ màn hình 2)
 (label hẹn giờ theo bước, nếu bấm hẹn giờ thì banner đếm giờ sẽ hiện ở bước đó và bấm bắt đầu tính giờ nếu muốn)
 - Nút “Bắt đầu nấu ngay” khi bấm sẽ đếm ngược toàn bộ thời gian ước tính của các bước
@@ -22,7 +22,8 @@ Màn hình 3: Công thức chi tiết (recipe_details.dart)
 
 
 Màn hình 4: Danh sách đi chợ (shopping_lists.dart)
-- Khi bấm 1 nút thủ công mà chuyển đến trang này thì hiển thị “Hãy chọn món ăn để đi chợ” khi không có dữ liệu món ăn, có nút chọn món ăn để chọn món ăn hiện có, và hiển thị tất cả nguyên liệu tương ứng với mỗi món ăn đã đã chọn
+- Khi từ màn hình Trang chủ hoặc các màn hình khác mà chuyển đến trang này thì hiển thị “Hãy chọn món ăn để đi chợ” khi không có dữ liệu món ăn, có nút chọn món ăn để chọn món ăn hiện có, và hiển thị tất cả nguyên liệu tương ứng với mỗi món ăn đã đã chọn
+- Khi bấm nút có icon “Xe hàng” từ màn hình 3 thì chuyển sang màn hình 4, hiển thị tất cả nguyên liệu tương ứng với món ăn đó
 - Cho phép chỉnh sửa từng nguyên liệu theo ý muốn
 - Khi chỉnh sửa giá ước tính, giá thực chi thì label “Ngân sách dự kiến” cũng phải cập nhật theo
 
