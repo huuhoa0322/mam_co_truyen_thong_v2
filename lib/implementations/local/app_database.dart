@@ -24,6 +24,12 @@ class AppDatabase {
     return await openDatabase(
       path,
       version: 1,
+      onConfigure: (db) async {
+        await db.execute('PRAGMA foreign_keys = ON');
+        try {
+          await db.execute('PRAGMA journal_mode = WAL');
+        } catch (_) {}
+      },
       onCreate: _createDB,
     );
   }
@@ -39,8 +45,9 @@ class AppDatabase {
     List<String> statements = cleanScript.split(';');
 
     for (var statement in statements) {
-      if (statement.trim().isNotEmpty) {
-        await db.execute(statement);
+      final trimmed = statement.trim();
+      if (trimmed.isNotEmpty && !trimmed.toUpperCase().startsWith('PRAGMA')) {
+        await db.execute(trimmed);
       }
     }
   }
