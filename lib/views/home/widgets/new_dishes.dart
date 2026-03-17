@@ -1,4 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 import '../../../domain/entities/dish.dart';
 import 'package:provider/provider.dart';
 import '../../../viewmodels/home/home_view_model.dart';
@@ -128,11 +132,17 @@ class _NewDishesWidgetState extends State<NewDishesWidget> {
                   border: Border.all(color: _tetGold.withValues(alpha: 0.3), width: 1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Image.network(
-                  dish.imageUrl ?? '',
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => Container(color: _tetRedLight),
-                ),
+                child: dish.imageUrl != null && !dish.imageUrl!.startsWith('http')
+                  ? Image.file(
+                      File(dish.imageUrl!),
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(color: _tetRedLight),
+                    )
+                  : Image.network(
+                      dish.imageUrl ?? '',
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(color: _tetRedLight),
+                    ),
               ),
             ),
             const SizedBox(width: 14),
@@ -247,6 +257,28 @@ class _NewDishesWidgetState extends State<NewDishesWidget> {
     final timeController = TextEditingController(text: dish.cookTimeMinutes.toString());
     int? selectedCategory = dish.categoryId;
     bool isFeatured = dish.isFeatured;
+    String? selectedDifficulty = dish.difficulty;
+    String? currentImageUrl = dish.imageUrl;
+    
+    Future<void> pickImage(StateSetter setState) async {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        // Create an assets/images folder string (we'll simulate it for local dev)
+        final appDir = await getApplicationDocumentsDirectory();
+        final imagesDir = Directory('${appDir.path}/assets/images');
+        if (!await imagesDir.exists()) {
+          await imagesDir.create(recursive: true);
+        }
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${p.basename(pickedFile.path)}';
+        final savedFile = await File(pickedFile.path).copy('${imagesDir.path}/$fileName');
+        
+        setState(() {
+          currentImageUrl = savedFile.path;
+        });
+      }
+    }
+
     
     showDialog(
       context: context,
@@ -262,11 +294,37 @@ class _NewDishesWidgetState extends State<NewDishesWidget> {
                   TextField(controller: descController, decoration: const InputDecoration(labelText: 'Mô tả')),
                   TextField(controller: timeController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Thời gian (phút)')),
                   const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: ['Dễ', 'Trung bình', 'Khó'].contains(selectedDifficulty) ? selectedDifficulty : 'Dễ',
+                    decoration: const InputDecoration(labelText: 'Độ khó'),
+                    items: ['Dễ', 'Trung bình', 'Khó'].map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+                    onChanged: (val) => setState(() => selectedDifficulty = val),
+                  ),
+                  const SizedBox(height: 12),
                   DropdownButtonFormField<int>(
                     value: selectedCategory,
                     decoration: const InputDecoration(labelText: 'Bộ sưu tập'),
                     items: categories.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))).toList(),
                     onChanged: (val) => setState(() => selectedCategory = val),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () => pickImage(setState), 
+                        icon: const Icon(Icons.image), 
+                        label: const Text('Chọn ảnh mới')
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          currentImageUrl != null 
+                              ? (currentImageUrl!.startsWith('http') ? 'Ảnh trên mạng' : 'Đã chọn ảnh cục bộ') 
+                              : 'Chưa có ảnh',
+                          style: const TextStyle(fontSize: 12, overflow: TextOverflow.ellipsis),
+                        ),
+                      )
+                    ],
                   ),
                   SwitchListTile(
                     title: const Text('Đánh dấu Gợi ý món ngon'),
@@ -286,8 +344,10 @@ class _NewDishesWidgetState extends State<NewDishesWidget> {
                       name: nameController.text,
                       description: descController.text,
                       cookTimeMinutes: int.tryParse(timeController.text) ?? dish.cookTimeMinutes,
+                      difficulty: selectedDifficulty ?? 'Trung bình',
                       categoryId: selectedCategory,
                       isFeatured: isFeatured,
+                      imageUrl: currentImageUrl,
                     );
                     context.read<HomeViewModel>().updateDish(updatedDish);
                   }
@@ -307,10 +367,29 @@ class _NewDishesWidgetState extends State<NewDishesWidget> {
     final nameController = TextEditingController();
     final descController = TextEditingController();
     final timeController = TextEditingController(text: '30');
-    final imgController = TextEditingController(text: 'https://cdn-icons-png.flaticon.com/512/3565/3565418.png');
     
     int? selectedCategory = categories.isNotEmpty ? categories.first.id : null;
     bool isFeatured = false;
+    String selectedDifficulty = 'Trung bình';
+    String? currentImageUrl;
+
+    Future<void> pickImage(StateSetter setState) async {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        final appDir = await getApplicationDocumentsDirectory();
+        final imagesDir = Directory('${appDir.path}/assets/images');
+        if (!await imagesDir.exists()) {
+          await imagesDir.create(recursive: true);
+        }
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${p.basename(pickedFile.path)}';
+        final savedFile = await File(pickedFile.path).copy('${imagesDir.path}/$fileName');
+        
+        setState(() {
+          currentImageUrl = savedFile.path;
+        });
+      }
+    }
 
     showDialog(
       context: context,
@@ -325,13 +404,36 @@ class _NewDishesWidgetState extends State<NewDishesWidget> {
                   TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Tên món ăn (Bắt buộc)')),
                   TextField(controller: descController, decoration: const InputDecoration(labelText: 'Mô tả')),
                   TextField(controller: timeController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Thời gian (phút)')),
-                  TextField(controller: imgController, decoration: const InputDecoration(labelText: 'Link hình ảnh')),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: selectedDifficulty,
+                    decoration: const InputDecoration(labelText: 'Độ khó'),
+                    items: ['Dễ', 'Trung bình', 'Khó'].map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+                    onChanged: (val) => setState(() => selectedDifficulty = val ?? 'Trung bình'),
+                  ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<int>(
                     value: selectedCategory,
                     decoration: const InputDecoration(labelText: 'Bộ sưu tập'),
                     items: categories.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))).toList(),
                     onChanged: (val) => setState(() => selectedCategory = val),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () => pickImage(setState), 
+                        icon: const Icon(Icons.image), 
+                        label: const Text('Chọn ảnh mới')
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          currentImageUrl != null ? 'Đã chọn ảnh cục bộ' : 'Chưa có ảnh',
+                          style: const TextStyle(fontSize: 12, overflow: TextOverflow.ellipsis),
+                        ),
+                      )
+                    ],
                   ),
                   SwitchListTile(
                     title: const Text('Đánh dấu Gợi ý món ngon'),
@@ -352,9 +454,9 @@ class _NewDishesWidgetState extends State<NewDishesWidget> {
                       name: nameController.text,
                       description: descController.text,
                       cookTimeMinutes: int.tryParse(timeController.text) ?? 30,
-                      difficulty: 'Trung bình',
+                      difficulty: selectedDifficulty,
                       isFeatured: isFeatured,
-                      imageUrl: imgController.text,
+                      imageUrl: currentImageUrl,
                       createdAt: DateTime.now(),
                       updatedAt: DateTime.now(),
                     );
@@ -424,13 +526,21 @@ class _NewDishesWidgetState extends State<NewDishesWidget> {
                         ),
                         leading: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            dish.imageUrl ?? '',
-                            width: 60,
-                            height: 60,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(width: 60, height: 60, color: _tetRed),
-                          ),
+                          child: dish.imageUrl != null && !dish.imageUrl!.startsWith('http')
+                              ? Image.file(
+                                  File(dish.imageUrl!),
+                                  width: 60,
+                                  height: 60,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(width: 60, height: 60, color: _tetRed),
+                                )
+                              : Image.network(
+                                  dish.imageUrl ?? '',
+                                  width: 60,
+                                  height: 60,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(width: 60, height: 60, color: _tetRed),
+                                ),
                         ),
                         title: Text(dish.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                         subtitle: Text('${dish.cookTimeMinutes} phút • ${dish.difficulty}', style: TextStyle(color: _tetCream.withValues(alpha: 0.8), fontSize: 12)),

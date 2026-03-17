@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../di.dart';
 import '../../viewmodels/home/home_view_model.dart';
 import 'widgets/featured_dishes.dart';
 import 'widgets/category_list.dart';
@@ -44,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<HomeViewModel>(
-      create: (_) => HomeViewModel()..loadHomeData(),
+      create: (_) => getIt<HomeViewModel>(),
       child: Scaffold(
         backgroundColor: _tetRed,
         body: Stack(

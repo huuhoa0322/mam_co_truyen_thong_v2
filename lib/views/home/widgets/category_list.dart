@@ -1,4 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 import '../../../domain/entities/category.dart';
 import '../../../domain/entities/dish.dart';
 import 'package:provider/provider.dart';
@@ -129,12 +133,17 @@ class CategoryListWidget extends StatelessWidget {
                 ],
               ),
               child: ClipOval(
-                child: Image.network(
-                  cat.coverImageUrl ?? '',
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) =>
-                      const Icon(Icons.image_not_supported, color: Colors.white38),
-                ),
+                child: cat.coverImageUrl != null && !cat.coverImageUrl!.startsWith('http')
+                  ? Image.file(
+                      File(cat.coverImageUrl!),
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported, color: Colors.white38),
+                    )
+                  : Image.network(
+                      cat.coverImageUrl ?? '',
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported, color: Colors.white38),
+                    ),
               ),
             ),
             const SizedBox(height: 6),
@@ -157,31 +166,72 @@ class CategoryListWidget extends StatelessWidget {
 
   void _showAddCategoryDialog(BuildContext context) {
     final nameController = TextEditingController();
-    final imgController = TextEditingController(text: 'https://cdn-icons-png.flaticon.com/512/3565/3565418.png');
-    
+    String? currentImageUrl;
+
+    Future<void> pickImage(StateSetter setState) async {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        final appDir = await getApplicationDocumentsDirectory();
+        final imagesDir = Directory('${appDir.path}/assets/images');
+        if (!await imagesDir.exists()) {
+          await imagesDir.create(recursive: true);
+        }
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${p.basename(pickedFile.path)}';
+        final savedFile = await File(pickedFile.path).copy('${imagesDir.path}/$fileName');
+        
+        setState(() {
+          currentImageUrl = savedFile.path;
+        });
+      }
+    }
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Thêm Bộ sưu tập'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Tên danh mục')),
-            TextField(controller: imgController, decoration: const InputDecoration(labelText: 'Link hình ảnh')),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty) {
-                context.read<HomeViewModel>().createCategory(nameController.text, imgController.text);
-              }
-              Navigator.pop(ctx);
-            },
-            child: const Text('Thêm'),
-          ),
-        ],
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogCtx, setState) {
+          return AlertDialog(
+            title: const Text('Thêm Bộ sưu tập'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Tên danh mục')),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () => pickImage(setState), 
+                      icon: const Icon(Icons.image), 
+                      label: const Text('Chọn ảnh')
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        currentImageUrl != null ? 'Đã chọn ảnh' : 'Chưa có ảnh',
+                        style: const TextStyle(fontSize: 12, overflow: TextOverflow.ellipsis),
+                      ),
+                    )
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+              ElevatedButton(
+                onPressed: () {
+                  if (nameController.text.isNotEmpty) {
+                    context.read<HomeViewModel>().createCategory(
+                      nameController.text, 
+                      currentImageUrl ?? 'https://cdn-icons-png.flaticon.com/512/3565/3565418.png'
+                    );
+                  }
+                  Navigator.pop(ctx);
+                },
+                child: const Text('Thêm'),
+              ),
+            ],
+          );
+        }
       ),
     );
   }
@@ -216,35 +266,75 @@ class CategoryListWidget extends StatelessWidget {
 
   void _showEditCategoryDialog(BuildContext context, Category cat) {
     final nameController = TextEditingController(text: cat.name);
-    final imgController = TextEditingController(text: cat.coverImageUrl);
+    String? currentImageUrl = cat.coverImageUrl;
     
+    Future<void> pickImage(StateSetter setState) async {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        final appDir = await getApplicationDocumentsDirectory();
+        final imagesDir = Directory('${appDir.path}/assets/images');
+        if (!await imagesDir.exists()) {
+          await imagesDir.create(recursive: true);
+        }
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${p.basename(pickedFile.path)}';
+        final savedFile = await File(pickedFile.path).copy('${imagesDir.path}/$fileName');
+        
+        setState(() {
+          currentImageUrl = savedFile.path;
+        });
+      }
+    }
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Sửa Danh mục'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Tên danh mục')),
-            TextField(controller: imgController, decoration: const InputDecoration(labelText: 'Link hình ảnh')),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty) {
-                final updatedCategory = cat.copyWith(
-                  name: nameController.text,
-                  coverImageUrl: imgController.text,
-                );
-                context.read<HomeViewModel>().updateCategory(updatedCategory);
-              }
-              Navigator.pop(ctx);
-            },
-            child: const Text('Lưu'),
-          ),
-        ],
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogCtx, setState) {
+          return AlertDialog(
+            title: const Text('Sửa Danh mục'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Tên danh mục')),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () => pickImage(setState), 
+                      icon: const Icon(Icons.image), 
+                      label: const Text('Đổi ảnh')
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        currentImageUrl != null 
+                            ? (currentImageUrl!.startsWith('http') ? 'Ảnh trên mạng' : 'Đã chọn ảnh cục bộ') 
+                            : 'Chưa có ảnh',
+                        style: const TextStyle(fontSize: 12, overflow: TextOverflow.ellipsis),
+                      ),
+                    )
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+              ElevatedButton(
+                onPressed: () {
+                  if (nameController.text.isNotEmpty) {
+                    final updatedCategory = cat.copyWith(
+                      name: nameController.text,
+                      coverImageUrl: currentImageUrl ?? cat.coverImageUrl,
+                    );
+                    context.read<HomeViewModel>().updateCategory(updatedCategory);
+                  }
+                  Navigator.pop(ctx);
+                },
+                child: const Text('Lưu'),
+              ),
+            ],
+          );
+        }
       ),
     );
   }
@@ -293,8 +383,10 @@ class CategoryListWidget extends StatelessWidget {
                       final cat = categories[index];
                       return ListTile(
                         leading: CircleAvatar(
-                          backgroundImage: NetworkImage(cat.coverImageUrl ?? ''),
                           backgroundColor: _tetRedLight,
+                          backgroundImage: cat.coverImageUrl != null && !cat.coverImageUrl!.startsWith('http')
+                              ? FileImage(File(cat.coverImageUrl!)) as ImageProvider
+                              : NetworkImage(cat.coverImageUrl ?? ''),
                           onBackgroundImageError: (_, __) => const Icon(Icons.error),
                         ),
                         title: Text(cat.name, style: const TextStyle(color: _tetCream, fontWeight: FontWeight.bold)),
@@ -408,13 +500,21 @@ class CategoryListWidget extends StatelessWidget {
                           ),
                           leading: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              dish.imageUrl ?? '',
-                              width: 60,
-                              height: 60,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(width: 60, height: 60, color: _tetRed),
-                            ),
+                            child: dish.imageUrl != null && !dish.imageUrl!.startsWith('http')
+                              ? Image.file(
+                                  File(dish.imageUrl!),
+                                  width: 60,
+                                  height: 60,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(width: 60, height: 60, color: _tetRed),
+                                )
+                              : Image.network(
+                                  dish.imageUrl ?? '',
+                                  width: 60,
+                                  height: 60,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(width: 60, height: 60, color: _tetRed),
+                                ),
                           ),
                           title: Text(dish.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                           subtitle: Text('${dish.cookTimeMinutes} phút • ${dish.difficulty}', style: TextStyle(color: _tetCream.withValues(alpha: 0.8), fontSize: 12)),
@@ -427,7 +527,7 @@ class CategoryListWidget extends StatelessWidget {
                                   Navigator.pop(ctx);
                                   // Can trigger showEditDishDialog here if we extract it outside, or just delegate 
                                   // For simplicity we show a toast or implement edit dialog if needed
-                                  ScaffoldMessenger.of(parentContext).showSnackBar(const SnackBar(content: Text('Vui lòng sửa ở mục Món Ăn Mới')));
+                                  ScaffoldMessenger.of(parentContext).showSnackBar(const SnackBar(content: Text('Vui lòng sửa ở mục Món Ngon Phải Thử')));
                                 },
                               ),
                               IconButton(
@@ -459,8 +559,27 @@ class CategoryListWidget extends StatelessWidget {
     final nameController = TextEditingController();
     final descController = TextEditingController();
     final timeController = TextEditingController(text: '30');
-    final imgController = TextEditingController(text: 'https://cdn-icons-png.flaticon.com/512/3565/3565418.png');
     bool isFeatured = false;
+    String selectedDifficulty = 'Trung bình';
+    String? currentImageUrl;
+
+    Future<void> pickImage(StateSetter setState) async {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        final appDir = await getApplicationDocumentsDirectory();
+        final imagesDir = Directory('${appDir.path}/assets/images');
+        if (!await imagesDir.exists()) {
+          await imagesDir.create(recursive: true);
+        }
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${p.basename(pickedFile.path)}';
+        final savedFile = await File(pickedFile.path).copy('${imagesDir.path}/$fileName');
+        
+        setState(() {
+          currentImageUrl = savedFile.path;
+        });
+      }
+    }
 
     showDialog(
       context: context,
@@ -475,8 +594,30 @@ class CategoryListWidget extends StatelessWidget {
                   TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Tên món ăn (Bắt buộc)')),
                   TextField(controller: descController, decoration: const InputDecoration(labelText: 'Mô tả')),
                   TextField(controller: timeController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Thời gian (phút)')),
-                  TextField(controller: imgController, decoration: const InputDecoration(labelText: 'Link hình ảnh')),
                   const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: selectedDifficulty,
+                    decoration: const InputDecoration(labelText: 'Độ khó'),
+                    items: ['Dễ', 'Trung bình', 'Khó'].map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+                    onChanged: (val) => setState(() => selectedDifficulty = val ?? 'Trung bình'),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () => pickImage(setState), 
+                        icon: const Icon(Icons.image), 
+                        label: const Text('Chọn ảnh mới')
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          currentImageUrl != null ? 'Đã chọn ảnh cục bộ' : 'Chưa có ảnh',
+                          style: const TextStyle(fontSize: 12, overflow: TextOverflow.ellipsis),
+                        ),
+                      )
+                    ],
+                  ),
                   SwitchListTile(
                     title: const Text('Đánh dấu Gợi ý món ngon'),
                     contentPadding: EdgeInsets.zero,
@@ -496,9 +637,9 @@ class CategoryListWidget extends StatelessWidget {
                       name: nameController.text,
                       description: descController.text,
                       cookTimeMinutes: int.tryParse(timeController.text) ?? 30,
-                      difficulty: 'Trung bình',
+                      difficulty: selectedDifficulty,
                       isFeatured: isFeatured,
-                      imageUrl: imgController.text,
+                      imageUrl: currentImageUrl,
                       createdAt: DateTime.now(),
                       updatedAt: DateTime.now(),
                     );

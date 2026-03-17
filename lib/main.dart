@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:mam_co_truyen_thong_v2/views/started.dart';
-import 'package:mam_co_truyen_thong_v2/views/home/home.dart';
 import 'package:mam_co_truyen_thong_v2/views/recipe_details/recipe_details.dart';
 import 'package:mam_co_truyen_thong_v2/views/shopping_lists/shopping_lists.dart';
 import 'package:mam_co_truyen_thong_v2/views/family_secret/family_secret.dart';
 import 'package:mam_co_truyen_thong_v2/views/main_screen.dart';
+import 'di.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  setupDI();
   runApp(const MyApp());
 }
 
