@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../main_screen.dart'; // Import MainScreen
 import '../../../domain/entities/dish.dart';
 import '../../../viewmodels/home/home_view_model.dart';
 import '../../../viewmodels/recipe_details/recipe_details_view_model.dart';
@@ -35,6 +36,8 @@ class EmptyDishPrompt extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(32),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(Icons.restaurant_menu, size: 80, color: Colors.grey.shade300),
           const SizedBox(height: 16),
@@ -63,40 +66,224 @@ class EmptyDishPrompt extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: const Color(0xFFFFF8F0),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.6,
-        builder: (_, controller) => Column(
-          children: [
-            const SizedBox(height: 12),
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 12),
-            const Text('Chọn Món Ăn', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _primary)),
-            const SizedBox(height: 8),
-            Expanded(
-              child: ListView.separated(
-                controller: controller,
-                padding: const EdgeInsets.all(16),
-                itemCount: homeVm.recentDishes.length,
-                separatorBuilder: (_, __) => const Divider(),
-                itemBuilder: (_, i) {
-                  final d = homeVm.recentDishes[i];
-                  Widget leading = d.imageUrl != null && !d.imageUrl!.startsWith('http')
-                      ? Image.file(File(d.imageUrl!), width: 50, height: 50, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(width: 50, height: 50, color: _primary))
-                      : Image.network(d.imageUrl ?? '', width: 50, height: 50, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(width: 50, height: 50, color: _primary));
-                  return ListTile(
-                    leading: ClipRRect(borderRadius: BorderRadius.circular(8), child: leading),
-                    title: Text(d.name),
-                    subtitle: Text('${d.cookTimeMinutes} phút • ${d.difficulty}'),
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      Navigator.pushReplacementNamed(context, '/recipe_details', arguments: d);
-                    },
-                  );
-                },
+      builder: (ctx) => _DishPickerSheet(
+        dishes: homeVm.allDishes,
+        onDishSelected: (dish) {
+          Navigator.pop(ctx); // Close the bottom sheet
+          
+          // Update the RecipeDetailsViewModel
+          final detailsVm = context.read<RecipeDetailsViewModel>();
+          detailsVm.loadByDish(dish);
+          
+          // Ensure we are on the correct tab (optional if we are already there)
+          // MainScreen.switchTab(context, 1); 
+        },
+      ),
+    );
+  }
+}
+
+// ── Dish Picker Sheet ────────────────────────────────────────────────────────
+class _DishPickerSheet extends StatefulWidget {
+  final List<Dish> dishes;
+  final Function(Dish) onDishSelected;
+
+  const _DishPickerSheet({
+    required this.dishes,
+    required this.onDishSelected,
+  });
+
+  @override
+  State<_DishPickerSheet> createState() => _DishPickerSheetState();
+}
+
+class _DishPickerSheetState extends State<_DishPickerSheet> {
+  late TextEditingController _searchController;
+  late List<Dish> _filteredDishes;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+    _filteredDishes = widget.dishes;
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterDishes(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredDishes = widget.dishes;
+      } else {
+        _filteredDishes = widget.dishes
+            .where((dish) => dish.name.toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.75,
+      maxChildSize: 0.95,
+      builder: (_, controller) => Column(
+        children: [
+          const SizedBox(height: 12),
+          Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: 16),
+          const Text('Chọn Món Ăn', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _primary)),
+          const SizedBox(height: 12),
+          // Search field
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TextField(
+              controller: _searchController,
+              onChanged: _filterDishes,
+              decoration: InputDecoration(
+                hintText: 'Tìm kiếm món ăn...',
+                prefixIcon: const Icon(Icons.search, color: _primary),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () {
+                          _searchController.clear();
+                          _filterDishes('');
+                        },
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFECEBEB)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFECEBEB)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: _primary, width: 2),
+                ),
+                filled: true,
+                fillColor: Colors.white,
               ),
             ),
-          ],
+          ),
+          const SizedBox(height: 12),
+          // Dishes list
+          Expanded(
+            child: _filteredDishes.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.no_meals, size: 64, color: Colors.grey.shade300),
+                        const SizedBox(height: 16),
+                        Text(
+                          _searchController.text.isEmpty ? 'Chưa có món ăn' : 'Không tìm thấy món ăn',
+                          style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.separated(
+                    controller: controller,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    itemCount: _filteredDishes.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (_, i) {
+                      final dish = _filteredDishes[i];
+                      return _DishListItem(
+                        dish: dish,
+                        onTap: () => widget.onDishSelected(dish),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Dish List Item ───────────────────────────────────────────────────────────
+class _DishListItem extends StatelessWidget {
+  final Dish dish;
+  final VoidCallback onTap;
+
+  const _DishListItem({
+    required this.dish,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Widget imageWidget = dish.imageUrl != null && !dish.imageUrl!.startsWith('http')
+        ? Image.file(
+            File(dish.imageUrl!),
+            width: 60,
+            height: 60,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              width: 60,
+              height: 60,
+              color: _primary,
+              child: const Icon(Icons.restaurant_menu, color: Colors.white),
+            ),
+          )
+        : Image.network(
+            dish.imageUrl ?? 'https://cdn-icons-png.flaticon.com/512/3565/3565418.png',
+            width: 60,
+            height: 60,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              width: 60,
+              height: 60,
+              color: _primary,
+              child: const Icon(Icons.restaurant_menu, color: Colors.white),
+            ),
+          );
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: imageWidget,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      dish.name,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '⏱️ ${dish.cookTimeMinutes} phút • ${dish.difficulty}',
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey.shade400),
+            ],
+          ),
         ),
       ),
     );
@@ -213,7 +400,7 @@ class RecipeBottomBar extends StatelessWidget {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () => Navigator.of(context).pop(),
+                onTap: () => MainScreen.switchTab(context, 0),
                 borderRadius: BorderRadius.circular(16),
                 child: const Padding(padding: EdgeInsets.all(14), child: Icon(Icons.arrow_back, color: _primary, size: 24)),
               ),
@@ -265,7 +452,7 @@ class _HeroSection extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _circleBtn(Icons.arrow_back, () => Navigator.of(context).pop()),
+                _circleBtn(Icons.arrow_back, () => MainScreen.switchTab(context, 0)),
                 Row(children: [
                   _circleBtn(Icons.favorite_border, () {}),
                   const SizedBox(width: 12),

@@ -94,6 +94,29 @@ class RecipeDetailsViewModel extends ChangeNotifier {
     }
   }
 
+  void clearDish() {
+    _dish = null;
+    _ingredients.clear();
+    _steps.clear();
+    _familySecret = null;
+    
+    // Clear global timer
+    _cookTimer?.cancel();
+    _cookTimer = null;
+    _isCookTimerRunning = false;
+    _cookTimerSeconds = 0;
+
+    // Clear step timers
+    for (var timer in _stepTimers.values) {
+      timer?.cancel();
+    }
+    _stepTimers.clear();
+    _stepTimerSeconds.clear();
+    _stepTimerRunning.clear();
+
+    notifyListeners();
+  }
+
   // ── Cook timer controls ──────────────────────────────────────────────────
 
   void startCookTimer() {

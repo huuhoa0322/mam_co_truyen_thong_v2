@@ -13,24 +13,41 @@ class RecipeDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dish = ModalRoute.of(context)?.settings.arguments as Dish?;
+    // Check if we are in a standalone route (pushed via Navigator) or embedded in MainScreen
+    final routeSettings = ModalRoute.of(context)?.settings;
+    final isStandalone = routeSettings?.name == '/recipe_details';
+    final dishArg = routeSettings?.arguments as Dish?;
 
-    return ChangeNotifierProvider<RecipeDetailsViewModel>(
-      create: (_) {
-        final vm = getIt<RecipeDetailsViewModel>();
-        if (dish != null && dish.id != null) {
-          vm.loadByDish(dish);
-        }
-        return vm;
-      },
-      child: _RecipeDetailsBody(dish: dish),
-    );
+    if (isStandalone) {
+      // Standalone mode: Create our own provider (Old Logic)
+      return ChangeNotifierProvider<RecipeDetailsViewModel>(
+        create: (_) {
+          final vm = getIt<RecipeDetailsViewModel>();
+          if (dishArg != null && dishArg.id != null) {
+            vm.loadByDish(dishArg);
+          }
+          return vm;
+        },
+        child: const _RecipeDetailsContent(), 
+      );
+    }
+    
+    // Embedded mode: Use shared provider from MainScreen (New Logic)
+    return const _RecipeDetailsContent();
+  }
+}
+
+class _RecipeDetailsContent extends StatelessWidget {
+  const _RecipeDetailsContent();
+
+  @override
+  Widget build(BuildContext context) {
+    return const _RecipeDetailsBody();
   }
 }
 
 class _RecipeDetailsBody extends StatelessWidget {
-  final Dish? dish;
-  const _RecipeDetailsBody({this.dish});
+  const _RecipeDetailsBody({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +55,7 @@ class _RecipeDetailsBody extends StatelessWidget {
       backgroundColor: const Color(0xFFFFF8F0),
       body: Consumer<RecipeDetailsViewModel>(
         builder: (context, vm, _) {
+          final dish = vm.dish; // Lấy dish từ ViewModel làm source of truth
           return Stack(
             children: [
               SingleChildScrollView(
@@ -47,7 +65,12 @@ class _RecipeDetailsBody extends StatelessWidget {
                   children: [
                     RecipeInfoHeader(dish: dish),
                     if (dish == null)
-                      const EmptyDishPrompt()
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.6,
+                        child: const Center(
+                          child: EmptyDishPrompt(),
+                        ),
+                      )
                     else if (vm.isLoading)
                       const Padding(
                         padding: EdgeInsets.all(48),
@@ -56,9 +79,9 @@ class _RecipeDetailsBody extends StatelessWidget {
                     else ...[
                       if (vm.isCookTimerRunning || vm.cookTimerSeconds > 0)
                         CookTimerBanner(vm: vm),
-                      IngredientsList(vm: vm, dish: dish!),
-                      RecipeStepsList(vm: vm, dish: dish!),
-                      FamilySecretForm(vm: vm, dish: dish!),
+                      IngredientsList(vm: vm, dish: dish),
+                      RecipeStepsList(vm: vm, dish: dish),
+                      FamilySecretForm(vm: vm, dish: dish),
                     ],
                   ],
                 ),

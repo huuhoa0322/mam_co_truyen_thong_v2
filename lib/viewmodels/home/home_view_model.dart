@@ -19,6 +19,7 @@ class HomeViewModel extends ChangeNotifier {
 
   List<Dish> _recentDishes = [];
   List<Dish> get recentDishes => _recentDishes;
+  List<Dish> get allDishes => _recentDishes; // All dishes from database
 
   String? _errorMessage;
   String? get errorMessage => _errorMessage;

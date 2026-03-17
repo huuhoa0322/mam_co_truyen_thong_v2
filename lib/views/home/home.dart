@@ -44,14 +44,12 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<HomeViewModel>(
-      create: (_) => getIt<HomeViewModel>(),
-      child: Scaffold(
-        backgroundColor: _tetRed,
-        body: Stack(
-          children: [
-            // Scrollable content
-            SafeArea(
+    return Scaffold(
+      backgroundColor: _tetRed,
+      body: Stack(
+        children: [
+          // Scrollable content
+          SafeArea(
               bottom: false,
               child: Consumer<HomeViewModel>(
                 builder: (context, viewModel, child) {
@@ -90,8 +88,7 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 
   // ── Header ────────────────────────────────────────────────────────────────

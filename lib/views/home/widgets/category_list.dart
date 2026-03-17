@@ -6,7 +6,9 @@ import 'package:path/path.dart' as p;
 import '../../../domain/entities/category.dart';
 import '../../../domain/entities/dish.dart';
 import 'package:provider/provider.dart';
+import '../../main_screen.dart'; // Import MainScreen
 import '../../../viewmodels/home/home_view_model.dart';
+import '../../../viewmodels/recipe_details/recipe_details_view_model.dart'; // Import RecipeDetailsViewModel
 
 const _tetRed = Color(0xFF8B0000);
 const _tetRedLight = Color(0xFFA52A2A);
@@ -541,7 +543,8 @@ class CategoryListWidget extends StatelessWidget {
                           ),
                           onTap: () {
                             Navigator.pop(ctx);
-                            Navigator.of(parentContext).pushNamed('/recipe_details', arguments: dish);
+                            parentContext.read<RecipeDetailsViewModel>().loadByDish(dish);
+                            MainScreen.switchTab(parentContext, 1);
                           },
                         );
                       },

@@ -2,7 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../domain/entities/dish.dart';
 import 'package:provider/provider.dart';
+import '../../main_screen.dart'; // Import MainScreen
 import '../../../viewmodels/home/home_view_model.dart';
+import '../../../viewmodels/recipe_details/recipe_details_view_model.dart'; // Import RecipeDetailsViewModel
 
 const _tetGold = Color(0xFFFFD700);
 const _tetCream = Color(0xFFFFFDD0);
@@ -60,7 +62,8 @@ class _FeaturedDishesWidgetState extends State<FeaturedDishesWidget> {
                   width: MediaQuery.of(context).size.width - 48,
                   child: GestureDetector(
                     onTap: () {
-                      Navigator.of(context).pushNamed('/recipe_details', arguments: dish);
+                      context.read<RecipeDetailsViewModel>().loadByDish(dish);
+                      MainScreen.switchTab(context, 1);
                     },
                     onLongPress: () => _showDishOptionsDialog(context, dish),
                     child: Container(
