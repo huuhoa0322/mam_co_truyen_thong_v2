@@ -4,20 +4,24 @@ import '../../domain/entities/dish.dart';
 import '../../domain/entities/family_secret.dart';
 import '../../domain/entities/recipe_ingredient.dart';
 import '../../domain/entities/recipe_step.dart';
+import '../../interfaces/repositories/i_dish_repository.dart';
 import '../../interfaces/repositories/i_family_secret_repository.dart';
 import '../../interfaces/repositories/i_recipe_ingredient_repository.dart';
 import '../../interfaces/repositories/i_recipe_step_repository.dart';
 
 class RecipeDetailsViewModel extends ChangeNotifier {
+  final IDishRepository _dishRepo;
   final IRecipeIngredientRepository _ingredientRepo;
   final IRecipeStepRepository _stepRepo;
   final IFamilySecretRepository _secretRepo;
 
   RecipeDetailsViewModel({
+    required IDishRepository dishRepo,
     required IRecipeIngredientRepository ingredientRepo,
     required IRecipeStepRepository stepRepo,
     required IFamilySecretRepository secretRepo,
-  })  : _ingredientRepo = ingredientRepo,
+  })  : _dishRepo = dishRepo,
+        _ingredientRepo = ingredientRepo,
         _stepRepo = stepRepo,
         _secretRepo = secretRepo;
 
@@ -92,6 +96,25 @@ class RecipeDetailsViewModel extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// Cập nhật thông tin món ăn (khẩu phần, thời gian, độ khó)
+  Future<void> updateDishInfo({
+    int? servingsMin,
+    int? servingsMax,
+    int? cookTimeMinutes,
+    String? difficulty,
+  }) async {
+    if (_dish == null) return;
+    final updated = _dish!.copyWith(
+      servingsMin: servingsMin,
+      servingsMax: servingsMax,
+      cookTimeMinutes: cookTimeMinutes,
+      difficulty: difficulty,
+    );
+    await _dishRepo.update(updated);
+    _dish = updated;
+    notifyListeners();
   }
 
   void clearDish() {

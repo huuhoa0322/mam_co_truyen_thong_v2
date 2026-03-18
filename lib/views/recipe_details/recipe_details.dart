@@ -47,7 +47,7 @@ class _RecipeDetailsContent extends StatelessWidget {
 }
 
 class _RecipeDetailsBody extends StatelessWidget {
-  const _RecipeDetailsBody({super.key});
+  const _RecipeDetailsBody();
 
   @override
   Widget build(BuildContext context) {

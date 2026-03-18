@@ -12,12 +12,9 @@ class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
   static void switchTab(BuildContext context, int index) {
-    print("Switching tab to $index");
     final state = context.findAncestorStateOfType<_MainScreenState>();
     if (state != null) {
       state.switchTab(index);
-    } else {
-      print("MainScreenState not found!");
     }
   }
 

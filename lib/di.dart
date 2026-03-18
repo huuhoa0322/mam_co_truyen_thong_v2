@@ -47,6 +47,7 @@ void setupDI() {
   );
   getIt.registerFactory<RecipeDetailsViewModel>(
     () => RecipeDetailsViewModel(
+      dishRepo: getIt<IDishRepository>(),
       ingredientRepo: getIt<IRecipeIngredientRepository>(),
       stepRepo: getIt<IRecipeStepRepository>(),
       secretRepo: getIt<IFamilySecretRepository>(),

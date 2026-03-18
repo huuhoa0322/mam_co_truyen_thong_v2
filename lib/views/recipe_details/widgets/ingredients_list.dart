@@ -95,23 +95,27 @@ class _IngredientTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      child: GestureDetector(
-        onTap: () => vm.toggleIngredientChecked(item),
-        onLongPress: () => _showOptions(context),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFF3F4F6)),
-            boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 4, offset: Offset(0, 2))],
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: IntrinsicHeight(
-            child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              Container(width: 4, color: _secondary),
-              Expanded(
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFF3F4F6)),
+          boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 4, offset: Offset(0, 2))],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: IntrinsicHeight(
+          child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            // Tap left side to toggle checked
+            GestureDetector(
+              onTap: () => vm.toggleIngredientChecked(item),
+              behavior: HitTestBehavior.opaque,
+              child: Container(width: 4, color: _secondary),
+            ),
+            Expanded(
+              child: GestureDetector(
+                onTap: () => vm.toggleIngredientChecked(item),
                 child: Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   child: Row(children: [
                     SizedBox(
                       width: 22, height: 22,
@@ -122,7 +126,7 @@ class _IngredientTile extends StatelessWidget {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text(item.name, style: TextStyle(
@@ -139,32 +143,34 @@ class _IngredientTile extends StatelessWidget {
                   ]),
                 ),
               ),
-            ]),
-          ),
+            ),
+            // Action buttons column
+            Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                InkWell(
+                  onTap: () => _showEditDialog(context),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    child: Icon(Icons.edit_outlined, size: 17, color: Colors.grey.shade500),
+                  ),
+                ),
+                Container(height: 1, width: 28, color: Colors.grey.shade100),
+                InkWell(
+                  onTap: () => vm.deleteIngredient(item.id!),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    child: Icon(Icons.delete_outline, size: 17, color: Colors.redAccent.shade100),
+                  ),
+                ),
+              ],
+            ),
+          ]),
         ),
       ),
     );
   }
 
-  void _showOptions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          ListTile(
-            leading: const Icon(Icons.edit, color: _primary),
-            title: const Text('Sửa'),
-            onTap: () { Navigator.pop(ctx); _showEditDialog(context); },
-          ),
-          ListTile(
-            leading: const Icon(Icons.delete, color: Colors.redAccent),
-            title: const Text('Xóa'),
-            onTap: () { Navigator.pop(ctx); vm.deleteIngredient(item.id!); },
-          ),
-        ]),
-      ),
-    );
-  }
 
   void _showEditDialog(BuildContext context) {
     final nameCtrl = TextEditingController(text: item.name);

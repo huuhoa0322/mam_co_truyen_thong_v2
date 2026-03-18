@@ -100,92 +100,92 @@ class _StepTile extends StatelessWidget {
     final isRunning = hasTimer && vm.isStepTimerRunning(step.id!);
     final remaining = hasTimer ? vm.stepTimerOf(step.id!) : 0;
 
-    return GestureDetector(
-      onLongPress: () => _showOptions(context),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 40,
-              child: Column(children: [
-                Container(
-                  width: 40, height: 40,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle, color: _primary,
-                    boxShadow: [BoxShadow(color: Color(0x40D32F2F), blurRadius: 8, offset: Offset(0, 2))],
-                  ),
-                  child: Center(child: Text('${step.stepNumber}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16))),
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 40,
+            child: Column(children: [
+              Container(
+                width: 40, height: 40,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle, color: _primary,
+                  boxShadow: [BoxShadow(color: Color(0x40D32F2F), blurRadius: 8, offset: Offset(0, 2))],
                 ),
-                if (!isLast)
-                  Expanded(child: Container(width: 1.5, margin: const EdgeInsets.symmetric(vertical: 4),
-                      decoration: const BoxDecoration(border: Border(left: BorderSide(color: Color(0x4DD32F2F), width: 1.5))))),
+                child: Center(child: Text('${step.stepNumber}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16))),
+              ),
+              if (!isLast)
+                Expanded(child: Container(width: 1.5, margin: const EdgeInsets.symmetric(vertical: 4),
+                    decoration: const BoxDecoration(border: Border(left: BorderSide(color: Color(0x4DD32F2F), width: 1.5))))),
+            ]),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4, bottom: 24),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                // Title row with edit/delete buttons
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(step.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF111827))),
+                    ),
+                    GestureDetector(
+                      onTap: () => _showEditDialog(context),
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 8, top: 2),
+                        child: Icon(Icons.edit_outlined, size: 17, color: Colors.grey.shade400),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => vm.deleteStep(step.id!),
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 8, top: 2),
+                        child: Icon(Icons.delete_outline, size: 17, color: Colors.redAccent.shade100),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(step.description, style: TextStyle(fontSize: 13, color: Colors.grey.shade600, height: 1.6)),
+                if (hasTimer) ...[
+                  const SizedBox(height: 12),
+                  Row(children: [
+                    GestureDetector(
+                      onTap: () => isRunning ? vm.pauseStepTimer(step.id!) : vm.startStepTimer(step.id!),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF2F2),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFFFEE2E2)),
+                        ),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Icon(isRunning ? Icons.pause_circle : Icons.timer, size: 16, color: _primary),
+                          const SizedBox(width: 6),
+                          Text(
+                            remaining > 0 ? vm.formatTime(remaining) : (step.timerLabel ?? ''),
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _primary),
+                          ),
+                        ]),
+                      ),
+                    ),
+                    if (isRunning || remaining < (step.timerMinutes! * 60)) ...[
+                      const SizedBox(width: 8),
+                      GestureDetector(onTap: () => vm.resetStepTimer(step.id!), child: const Icon(Icons.refresh, size: 18, color: Colors.grey)),
+                    ],
+                  ]),
+                ],
               ]),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 4, bottom: 24),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(step.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF111827))),
-                  const SizedBox(height: 8),
-                  Text(step.description, style: TextStyle(fontSize: 13, color: Colors.grey.shade600, height: 1.6)),
-                  if (hasTimer) ...[
-                    const SizedBox(height: 12),
-                    Row(children: [
-                      GestureDetector(
-                        onTap: () => isRunning ? vm.pauseStepTimer(step.id!) : vm.startStepTimer(step.id!),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFEF2F2),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: const Color(0xFFFEE2E2)),
-                          ),
-                          child: Row(mainAxisSize: MainAxisSize.min, children: [
-                            Icon(isRunning ? Icons.pause_circle : Icons.timer, size: 16, color: _primary),
-                            const SizedBox(width: 6),
-                            Text(
-                              remaining > 0 ? vm.formatTime(remaining) : (step.timerLabel ?? ''),
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _primary),
-                            ),
-                          ]),
-                        ),
-                      ),
-                      if (isRunning || remaining < (step.timerMinutes! * 60)) ...[
-                        const SizedBox(width: 8),
-                        GestureDetector(onTap: () => vm.resetStepTimer(step.id!), child: const Icon(Icons.refresh, size: 18, color: Colors.grey)),
-                      ],
-                    ]),
-                  ],
-                ]),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  void _showOptions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          ListTile(
-            leading: const Icon(Icons.edit, color: _primary),
-            title: const Text('Sửa'),
-            onTap: () { Navigator.pop(ctx); _showEditDialog(context); },
-          ),
-          ListTile(
-            leading: const Icon(Icons.delete, color: Colors.redAccent),
-            title: const Text('Xóa'),
-            onTap: () { Navigator.pop(ctx); vm.deleteStep(step.id!); },
-          ),
-        ]),
-      ),
-    );
-  }
 
   void _showEditDialog(BuildContext context) {
     final titleCtrl = TextEditingController(text: step.title);
