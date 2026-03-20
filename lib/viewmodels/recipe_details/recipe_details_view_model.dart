@@ -51,22 +51,78 @@ class RecipeDetailsViewModel extends ChangeNotifier {
   int get cookTimerSeconds => _cookTimerSeconds;
   bool _isCookTimerRunning = false;
   bool get isCookTimerRunning => _isCookTimerRunning;
+  bool _isGlobalTimerSelected = true;
+  bool get isGlobalTimerSelected => _isGlobalTimerSelected;
   Timer? _cookTimer;
 
   // ── Per-step timers ──────────────────────────────────────────────────────
 
   // Map<stepId, remainingSeconds>
   final Map<int, int> _stepTimerSeconds = {};
+  final Map<int, int> _stepTimerInitialSeconds = {};
   final Map<int, bool> _stepTimerRunning = {};
   final Map<int, Timer?> _stepTimers = {};
+  int? _activeStepTimerId;
 
   int stepTimerOf(int stepId) => _stepTimerSeconds[stepId] ?? 0;
   bool isStepTimerRunning(int stepId) => _stepTimerRunning[stepId] ?? false;
+
+  RecipeStep? get activeStepTimerStep {
+    final stepId = _activeStepTimerId;
+    if (stepId == null) return null;
+    for (final step in _steps) {
+      if (step.id == stepId) return step;
+    }
+    return null;
+  }
+
+  bool get isInStepTimerMode => !_isCookTimerRunning && activeStepTimerStep != null;
+  bool get canSelectStepTimer => !_isCookTimerRunning;
+  bool get isActiveStepTimerRunning {
+    final stepId = _activeStepTimerId;
+    if (stepId == null) return false;
+    return isStepTimerRunning(stepId);
+  }
+
+  String get cookBannerTitle {
+    if (_isGlobalTimerSelected || _isCookTimerRunning) return 'Đang nấu...';
+    final step = activeStepTimerStep;
+    if (step == null) return 'Đang nấu...';
+    return 'Bước ${step.stepNumber}: ${step.title}';
+  }
+
+  String get cookBannerSubtitle {
+    if (_isGlobalTimerSelected || _isCookTimerRunning) return 'Đếm ngược toàn bộ';
+    return activeStepTimerStep != null ? 'Đang thực hiện' : 'Đếm ngược toàn bộ';
+  }
+
+  int get cookBannerSeconds {
+    if (_isGlobalTimerSelected || _isCookTimerRunning) return _cookTimerSeconds;
+    final step = activeStepTimerStep;
+    if (step?.id != null) {
+      return stepTimerOf(step!.id!);
+    }
+    return _cookTimerSeconds;
+  }
+
+  bool get isBannerTimerRunning {
+    if (_isGlobalTimerSelected) return _isCookTimerRunning;
+    final stepId = _activeStepTimerId;
+    if (stepId == null) return false;
+    return isStepTimerRunning(stepId);
+  }
+
+  bool get isStepCrudLocked {
+    if (_isGlobalTimerSelected && _isCookTimerRunning) return true;
+    return _stepTimerRunning.values.any((isRunning) => isRunning);
+  }
 
   // ── Load data ────────────────────────────────────────────────────────────
 
   Future<void> loadByDish(Dish dish) async {
     _dish = dish;
+    _activeStepTimerId = null;
+    _isGlobalTimerSelected = true;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -82,6 +138,7 @@ class RecipeDetailsViewModel extends ChangeNotifier {
         _steps = [];
         _familySecret = null;
         _cookTimerSeconds = 0;
+          _clearStepTimersState();
         return;
       }
 
@@ -96,10 +153,14 @@ class RecipeDetailsViewModel extends ChangeNotifier {
       );
       _cookTimerSeconds = totalMinutes * 60;
 
+      _clearStepTimersState();
+
       // Init per-step timers
       for (final step in _steps) {
         if (step.timerMinutes != null && step.id != null) {
-          _stepTimerSeconds[step.id!] = step.timerMinutes! * 60;
+          final initialSeconds = step.timerMinutes! * 60;
+          _stepTimerSeconds[step.id!] = initialSeconds;
+          _stepTimerInitialSeconds[step.id!] = initialSeconds;
           _stepTimerRunning[step.id!] = false;
         }
       }
@@ -148,7 +209,10 @@ class RecipeDetailsViewModel extends ChangeNotifier {
     }
     _stepTimers.clear();
     _stepTimerSeconds.clear();
+    _stepTimerInitialSeconds.clear();
     _stepTimerRunning.clear();
+    _activeStepTimerId = null;
+    _isGlobalTimerSelected = true;
 
     notifyListeners();
   }
@@ -156,43 +220,73 @@ class RecipeDetailsViewModel extends ChangeNotifier {
   // ── Cook timer controls ──────────────────────────────────────────────────
 
   void startCookTimer() {
-    if (_isCookTimerRunning || _cookTimerSeconds <= 0) return;
+    if (_isCookTimerRunning) return;
+
+    if (_cookTimerSeconds <= 0) {
+      _cookTimerSeconds = _totalInitialCookSeconds();
+    }
+    if (_cookTimerSeconds <= 0) {
+      notifyListeners();
+      return;
+    }
+
+    _pauseAllStepTimers(clearActiveSelection: false);
+
     _isCookTimerRunning = true;
     _cookTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (_cookTimerSeconds > 0) {
-        _cookTimerSeconds--;
-        notifyListeners();
-      } else {
+      final next = _cookTimerSeconds - 1;
+      _cookTimerSeconds = next > 0 ? next : 0;
+      if (_cookTimerSeconds <= 0) {
         stopCookTimer();
+        return;
       }
+
+      notifyListeners();
     });
     notifyListeners();
   }
 
   void pauseCookTimer() {
     _cookTimer?.cancel();
+    _cookTimer = null;
     _isCookTimerRunning = false;
     notifyListeners();
   }
 
   void stopCookTimer() {
     _cookTimer?.cancel();
+    _cookTimer = null;
     _isCookTimerRunning = false;
     notifyListeners();
   }
 
   void resetCookTimer() {
     stopCookTimer();
-    final totalMinutes = _steps.fold<int>(0, (sum, s) => sum + (s.timerMinutes ?? 0));
-    _cookTimerSeconds = totalMinutes * 60;
+    _resetAllStepTimersToInitial();
+    _cookTimerSeconds = _totalInitialCookSeconds();
     notifyListeners();
   }
 
   // ── Per-step timer controls ──────────────────────────────────────────────
 
   void startStepTimer(int stepId) {
+    if (_isCookTimerRunning) return;
     if (isStepTimerRunning(stepId) || stepTimerOf(stepId) <= 0) return;
+
+    // Only one step timer can run at a time.
+    for (final entry in _stepTimerRunning.entries) {
+      final otherStepId = entry.key;
+      final isRunning = entry.value;
+      if (otherStepId != stepId && isRunning) {
+        _stepTimers[otherStepId]?.cancel();
+        _stepTimers[otherStepId] = null;
+        _stepTimerRunning[otherStepId] = false;
+      }
+    }
+
+    _activeStepTimerId = stepId;
     _stepTimerRunning[stepId] = true;
+    _stepTimers[stepId]?.cancel();
     _stepTimers[stepId] = Timer.periodic(const Duration(seconds: 1), (_) {
       final remaining = (_stepTimerSeconds[stepId] ?? 0) - 1;
       if (remaining > 0) {
@@ -208,14 +302,66 @@ class RecipeDetailsViewModel extends ChangeNotifier {
 
   void pauseStepTimer(int stepId) {
     _stepTimers[stepId]?.cancel();
+    _stepTimers[stepId] = null;
     _stepTimerRunning[stepId] = false;
+    notifyListeners();
+  }
+
+  void selectStepTimer(int stepId) {
+    if (_isCookTimerRunning) return;
+    if (!_stepTimerSeconds.containsKey(stepId)) return;
+
+    final previousStepId = _activeStepTimerId;
+    if (previousStepId != null && previousStepId != stepId && isStepTimerRunning(previousStepId)) {
+      _pauseAllStepTimers(clearActiveSelection: false);
+    }
+
+    _activeStepTimerId = stepId;
+    _isGlobalTimerSelected = false;
+    notifyListeners();
+  }
+
+  void toggleBannerTimer() {
+    if (_isGlobalTimerSelected) {
+      if (_isCookTimerRunning) {
+        pauseCookTimer();
+      } else {
+        startCookTimer();
+      }
+      return;
+    }
+
+    final stepId = _activeStepTimerId;
+    if (stepId != null) {
+      if (isStepTimerRunning(stepId)) {
+        pauseStepTimer(stepId);
+      } else {
+        startStepTimer(stepId);
+      }
+      return;
+    }
+
+    notifyListeners();
+  }
+
+  void toggleGlobalCookTimerFromBottom() {
+    _isGlobalTimerSelected = true;
+    _pauseAllStepTimers(clearActiveSelection: false);
     notifyListeners();
   }
 
   void resetStepTimer(int stepId) {
     pauseStepTimer(stepId);
-    final step = _steps.firstWhere((s) => s.id == stepId, orElse: () => _steps.first);
+    RecipeStep? step;
+    for (final item in _steps) {
+      if (item.id == stepId) {
+        step = item;
+        break;
+      }
+    }
+    if (step == null) return;
     _stepTimerSeconds[stepId] = (step.timerMinutes ?? 0) * 60;
+    _activeStepTimerId = stepId;
     notifyListeners();
   }
 
@@ -262,10 +408,12 @@ class RecipeDetailsViewModel extends ChangeNotifier {
   // ── Step CRUD ────────────────────────────────────────────────────────────
 
   Future<void> addStep(RecipeStep step) async {
+    if (isStepCrudLocked) return;
     try {
       await _stepRepo.create(step);
       _steps = await _stepRepo.getByDish(_dish!.id!);
       _recalcCookTimer();
+      _syncStepTimersWithSteps();
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
@@ -274,10 +422,12 @@ class RecipeDetailsViewModel extends ChangeNotifier {
   }
 
   Future<void> updateStep(RecipeStep step) async {
+    if (isStepCrudLocked) return;
     try {
       await _stepRepo.update(step);
       _steps = await _stepRepo.getByDish(_dish!.id!);
       _recalcCookTimer();
+      _syncStepTimersWithSteps();
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
@@ -286,9 +436,18 @@ class RecipeDetailsViewModel extends ChangeNotifier {
   }
 
   Future<void> deleteStep(int id) async {
+    if (isStepCrudLocked) return;
     try {
       await _stepRepo.delete(id);
       _steps.removeWhere((s) => s.id == id);
+      if (_activeStepTimerId == id) {
+        _activeStepTimerId = null;
+      }
+      _stepTimers[id]?.cancel();
+      _stepTimers.remove(id);
+      _stepTimerSeconds.remove(id);
+      _stepTimerInitialSeconds.remove(id);
+      _stepTimerRunning.remove(id);
       _recalcCookTimer();
       notifyListeners();
     } catch (e) {
@@ -298,8 +457,92 @@ class RecipeDetailsViewModel extends ChangeNotifier {
   }
 
   void _recalcCookTimer() {
+    _cookTimerSeconds = _totalInitialCookSeconds();
+  }
+
+  int _totalInitialCookSeconds() {
     final totalMinutes = _steps.fold<int>(0, (sum, s) => sum + (s.timerMinutes ?? 0));
-    _cookTimerSeconds = totalMinutes * 60;
+    return totalMinutes * 60;
+  }
+
+  int _totalRemainingStepSeconds() {
+    var total = 0;
+    for (final value in _stepTimerSeconds.values) {
+      total += value;
+    }
+    return total;
+  }
+
+  void _resetAllStepTimersToInitial() {
+    for (final step in _steps) {
+      final stepId = step.id;
+      final timerMinutes = step.timerMinutes;
+      if (stepId == null || timerMinutes == null) continue;
+
+      _stepTimerSeconds[stepId] = timerMinutes * 60;
+      _stepTimerInitialSeconds[stepId] = timerMinutes * 60;
+      _stepTimerRunning[stepId] = false;
+      _stepTimers[stepId]?.cancel();
+      _stepTimers[stepId] = null;
+    }
+  }
+
+  void _pauseAllStepTimers({bool clearActiveSelection = false}) {
+    for (final stepId in _stepTimers.keys.toList()) {
+      _stepTimers[stepId]?.cancel();
+      _stepTimers[stepId] = null;
+    }
+    for (final key in _stepTimerRunning.keys.toList()) {
+      _stepTimerRunning[key] = false;
+    }
+    if (clearActiveSelection) {
+      _activeStepTimerId = null;
+    }
+  }
+
+  void _clearStepTimersState() {
+    _pauseAllStepTimers(clearActiveSelection: true);
+    _stepTimers.clear();
+    _stepTimerSeconds.clear();
+    _stepTimerInitialSeconds.clear();
+    _stepTimerRunning.clear();
+  }
+
+  void _syncStepTimersWithSteps() {
+    final validIds = <int>{};
+    for (final step in _steps) {
+      final id = step.id;
+      if (id == null || step.timerMinutes == null) continue;
+      validIds.add(id);
+
+      final initialSeconds = step.timerMinutes! * 60;
+      final previousInitial = _stepTimerInitialSeconds[id];
+
+      if (previousInitial != null && previousInitial != initialSeconds) {
+        // Timer value was edited: refresh remaining immediately to the new value.
+        _stepTimers[id]?.cancel();
+        _stepTimers[id] = null;
+        _stepTimerRunning[id] = false;
+        _stepTimerSeconds[id] = initialSeconds;
+      } else {
+        _stepTimerSeconds[id] = _stepTimerSeconds[id] ?? initialSeconds;
+        _stepTimerRunning[id] = _stepTimerRunning[id] ?? false;
+      }
+
+      _stepTimerInitialSeconds[id] = initialSeconds;
+    }
+
+    for (final oldId in _stepTimerSeconds.keys.toList()) {
+      if (validIds.contains(oldId)) continue;
+      _stepTimers[oldId]?.cancel();
+      _stepTimers.remove(oldId);
+      _stepTimerSeconds.remove(oldId);
+      _stepTimerInitialSeconds.remove(oldId);
+      _stepTimerRunning.remove(oldId);
+      if (_activeStepTimerId == oldId) {
+        _activeStepTimerId = null;
+      }
+    }
   }
 
   // ── Family Secret CRUD ───────────────────────────────────────────────────

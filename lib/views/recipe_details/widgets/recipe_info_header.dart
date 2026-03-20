@@ -6,6 +6,10 @@ import '../../../domain/entities/dish.dart';
 import '../../../viewmodels/home/home_view_model.dart';
 import '../../../viewmodels/recipe_details/recipe_details_view_model.dart';
 
+void _backToDishSelection(BuildContext context) {
+  context.read<RecipeDetailsViewModel>().clearDish();
+}
+
 // ── Color constants ──────────────────────────────────────────────────────────
 const Color _primary = Color(0xFFD32F2F);
 const Color _primaryDark = Color(0xFFB71C1C);
@@ -298,6 +302,10 @@ class CookTimerBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final title = vm.cookBannerTitle;
+    final subtitle = vm.cookBannerSubtitle;
+    final displaySeconds = vm.cookBannerSeconds;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
       child: Container(
@@ -310,19 +318,32 @@ class CookTimerBanner extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Đang nấu...', style: TextStyle(color: Color(0xFF7F1D1D), fontWeight: FontWeight.bold, fontSize: 18)),
-                SizedBox(height: 2),
-                Text('Đếm ngược toàn bộ', style: TextStyle(color: Color(0xFF7F1D1D), fontSize: 13)),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Color(0xFF7F1D1D), fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Color(0xFF7F1D1D), fontSize: 13),
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(width: 12),
             Row(children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(10)),
-                child: Text(vm.formatTime(vm.cookTimerSeconds),
+                child: Text(vm.formatTime(displaySeconds),
                     style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF7F1D1D), fontFamily: 'monospace', letterSpacing: 2)),
               ),
               const SizedBox(width: 12),
@@ -332,10 +353,10 @@ class CookTimerBanner extends StatelessWidget {
                 elevation: 4,
                 child: InkWell(
                   customBorder: const CircleBorder(),
-                  onTap: () => vm.isCookTimerRunning ? vm.pauseCookTimer() : vm.startCookTimer(),
+                  onTap: vm.toggleBannerTimer,
                   child: Padding(
                     padding: const EdgeInsets.all(10),
-                    child: Icon(vm.isCookTimerRunning ? Icons.pause : Icons.play_arrow, color: Colors.white, size: 24),
+                    child: Icon(vm.isBannerTimerRunning ? Icons.pause : Icons.play_arrow, color: Colors.white, size: 24),
                   ),
                 ),
               ),
@@ -376,7 +397,7 @@ class RecipeBottomBar extends StatelessWidget {
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: dish == null ? null : () {
-                    vm.isCookTimerRunning ? vm.pauseCookTimer() : vm.startCookTimer();
+                    vm.toggleGlobalCookTimerFromBottom();
                   },
                   borderRadius: BorderRadius.circular(16),
                   child: Padding(
@@ -384,9 +405,9 @@ class RecipeBottomBar extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(vm.isCookTimerRunning ? Icons.pause_circle_filled : Icons.play_circle_filled, color: const Color(0xFF7F1D1D)),
+                        const Icon(Icons.play_circle_filled, color: Color(0xFF7F1D1D)),
                         const SizedBox(width: 8),
-                        Text(vm.isCookTimerRunning ? 'Tạm dừng' : 'Bắt đầu nấu ngay',
+                        Text('Bắt đầu nấu ngay',
                             style: const TextStyle(color: Color(0xFF7F1D1D), fontWeight: FontWeight.bold, fontSize: 16)),
                       ],
                     ),
@@ -401,9 +422,9 @@ class RecipeBottomBar extends StatelessWidget {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () => MainScreen.switchTab(context, 0),
+                onTap: () => MainScreen.switchTab(context, 2),
                 borderRadius: BorderRadius.circular(16),
-                child: const Padding(padding: EdgeInsets.all(14), child: Icon(Icons.arrow_back, color: _primary, size: 24)),
+                child: const Padding(padding: EdgeInsets.all(14), child: Icon(Icons.shopping_cart, color: _primary, size: 24)),
               ),
             ),
           ),
@@ -453,7 +474,7 @@ class _HeroSection extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _circleBtn(Icons.arrow_back, () => MainScreen.switchTab(context, 0)),
+                _circleBtn(Icons.arrow_back, () => _backToDishSelection(context)),
                 Row(children: [
                   _circleBtn(Icons.favorite_border, () {}),
                   const SizedBox(width: 12),
