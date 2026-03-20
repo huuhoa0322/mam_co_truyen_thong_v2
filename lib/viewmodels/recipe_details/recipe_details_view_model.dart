@@ -465,13 +465,6 @@ class RecipeDetailsViewModel extends ChangeNotifier {
     return totalMinutes * 60;
   }
 
-  int _totalRemainingStepSeconds() {
-    var total = 0;
-    for (final value in _stepTimerSeconds.values) {
-      total += value;
-    }
-    return total;
-  }
 
   void _resetAllStepTimersToInitial() {
     for (final step in _steps) {

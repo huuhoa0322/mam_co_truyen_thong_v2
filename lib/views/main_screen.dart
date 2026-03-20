@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../di.dart';
 import '../viewmodels/home/home_view_model.dart';
 import '../viewmodels/recipe_details/recipe_details_view_model.dart';
+import '../viewmodels/shopping_list/shopping_list_view_model.dart';
 import 'home/home.dart';
 import 'recipe_details/recipe_details.dart';
 import 'shopping_lists/shopping_lists.dart';
@@ -48,6 +49,13 @@ class _MainScreenState extends State<MainScreen> {
         ChangeNotifierProvider<RecipeDetailsViewModel>(
           create: (_) => getIt<RecipeDetailsViewModel>(),
         ),
+        ChangeNotifierProvider<ShoppingListViewModel>(
+          create: (_) {
+            final vm = getIt<ShoppingListViewModel>();
+            vm.init(); // Tự động load danh sách món khi khởi tạo
+            return vm;
+          },
+        ),
       ],
       // Dùng builder thay vì child để context bên trong có thể đọc provider
       builder: (context, _) => Scaffold(
@@ -71,6 +79,9 @@ class _MainScreenState extends State<MainScreen> {
               if (index == 1) {
                 // context ở đây đã nằm BÊN TRONG MultiProvider — không còn lỗi ProviderNotFoundException
                 context.read<RecipeDetailsViewModel>().clearDish();
+              } else if (index == 2) {
+                // Tương tự, xóa cache món ăn vừa chọn ở màn hình 4 
+                context.read<ShoppingListViewModel>().unselectDish();
               }
               setState(() {
                 _currentIndex = index;

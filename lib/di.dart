@@ -5,13 +5,16 @@ import 'implementations/repositories/local_dish_repository.dart';
 import 'implementations/repositories/local_family_secret_repository.dart';
 import 'implementations/repositories/local_recipe_ingredient_repository.dart';
 import 'implementations/repositories/local_recipe_step_repository.dart';
+import 'implementations/repositories/local_shopping_item_repository.dart';
 import 'interfaces/repositories/i_category_repository.dart';
 import 'interfaces/repositories/i_dish_repository.dart';
 import 'interfaces/repositories/i_family_secret_repository.dart';
 import 'interfaces/repositories/i_recipe_ingredient_repository.dart';
 import 'interfaces/repositories/i_recipe_step_repository.dart';
+import 'interfaces/repositories/i_shopping_item_repository.dart';
 import 'viewmodels/home/home_view_model.dart';
 import 'viewmodels/recipe_details/recipe_details_view_model.dart';
+import 'viewmodels/shopping_list/shopping_list_view_model.dart';
 
 final getIt = GetIt.instance;
 
@@ -37,6 +40,9 @@ void setupDI() {
   getIt.registerLazySingleton<IFamilySecretRepository>(
     () => LocalFamilySecretRepository(getIt<AppDatabase>()),
   );
+  getIt.registerLazySingleton<IShoppingItemRepository>(
+    () => LocalShoppingItemRepository(getIt<AppDatabase>()),
+  );
 
   // ViewModels
   getIt.registerFactory<HomeViewModel>(
@@ -51,6 +57,13 @@ void setupDI() {
       ingredientRepo: getIt<IRecipeIngredientRepository>(),
       stepRepo: getIt<IRecipeStepRepository>(),
       secretRepo: getIt<IFamilySecretRepository>(),
+    ),
+  );
+  getIt.registerFactory<ShoppingListViewModel>(
+    () => ShoppingListViewModel(
+      shoppingRepo: getIt<IShoppingItemRepository>(),
+      dishRepo: getIt<IDishRepository>(),
+      ingredientRepo: getIt<IRecipeIngredientRepository>(),
     ),
   );
 }

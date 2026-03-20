@@ -1,10 +1,11 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../main_screen.dart'; // Import MainScreen
 import '../../../domain/entities/dish.dart';
 import '../../../viewmodels/home/home_view_model.dart';
 import '../../../viewmodels/recipe_details/recipe_details_view_model.dart';
+import '../../../viewmodels/shopping_list/shopping_list_view_model.dart';
 
 void _backToDishSelection(BuildContext context) {
   context.read<RecipeDetailsViewModel>().clearDish();
@@ -422,7 +423,12 @@ class RecipeBottomBar extends StatelessWidget {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () => MainScreen.switchTab(context, 2),
+                onTap: () {
+                  if (dish != null) {
+                    context.read<ShoppingListViewModel>().selectDish(dish!);
+                  }
+                  MainScreen.switchTab(context, 2);
+                },
                 borderRadius: BorderRadius.circular(16),
                 child: const Padding(padding: EdgeInsets.all(14), child: Icon(Icons.shopping_cart, color: _primary, size: 24)),
               ),
