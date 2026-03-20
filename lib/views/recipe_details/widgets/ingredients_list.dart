@@ -128,15 +128,25 @@ class _IngredientTile extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(item.name, style: TextStyle(
-                          color: item.isChecked ? Colors.grey.shade400 : Colors.grey.shade700,
-                          decoration: item.isChecked ? TextDecoration.lineThrough : null,
-                          fontSize: 15,
-                        )),
-                        if (item.notes != null)
-                          Text(item.notes!, style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
-                      ]),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.name,
+                            style: TextStyle(
+                              color: item.isChecked ? Colors.grey.shade400 : Colors.grey.shade700,
+                              decoration: item.isChecked ? TextDecoration.lineThrough : null,
+                              fontSize: 15,
+                            ),
+                          ),
+                          if (item.notes != null && item.notes!.trim().isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Text(item.notes!, style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
+                            ),
+                        ],
+                      ),
                     ),
                     Text('${item.amount % 1 == 0 ? item.amount.toInt() : item.amount} ${item.unit}',
                         style: TextStyle(fontSize: 13, color: Colors.grey.shade500, fontWeight: FontWeight.w500)),
