@@ -51,9 +51,9 @@ class LocalDishRepository implements IDishRepository {
   }
 
   @override
-  Future<void> create(Dish dish) async {
+  Future<int> create(Dish dish) async {
     final db = await _db.database;
-    await db.insert('dishes', DishDto.toMap(dish));
+    return await db.insert('dishes', DishDto.toMap(dish));
   }
 
   @override

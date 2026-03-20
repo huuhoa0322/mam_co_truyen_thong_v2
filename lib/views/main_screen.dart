@@ -4,6 +4,7 @@ import '../di.dart';
 import '../viewmodels/home/home_view_model.dart';
 import '../viewmodels/recipe_details/recipe_details_view_model.dart';
 import '../viewmodels/shopping_list/shopping_list_view_model.dart';
+import '../viewmodels/family_secret/secret_view_model.dart';
 import 'home/home.dart';
 import 'recipe_details/recipe_details.dart';
 import 'shopping_lists/shopping_lists.dart';
@@ -56,6 +57,13 @@ class _MainScreenState extends State<MainScreen> {
             return vm;
           },
         ),
+        ChangeNotifierProvider<SecretViewModel>(
+          create: (_) {
+            final vm = getIt<SecretViewModel>();
+            vm.init();
+            return vm;
+          },
+        ),
       ],
       // Dùng builder thay vì child để context bên trong có thể đọc provider
       builder: (context, _) => Scaffold(
@@ -76,12 +84,18 @@ class _MainScreenState extends State<MainScreen> {
           child: BottomNavigationBar(
             currentIndex: _currentIndex,
             onTap: (index) {
-              if (index == 1) {
+              if (index == 0) {
+                // Tự động load mới lại dữ liệu trang chủ đề phòng có món mới được tạo từ màn 5
+                context.read<HomeViewModel>().loadHomeData();
+              } else if (index == 1) {
                 // context ở đây đã nằm BÊN TRONG MultiProvider — không còn lỗi ProviderNotFoundException
                 context.read<RecipeDetailsViewModel>().clearDish();
               } else if (index == 2) {
                 // Tương tự, xóa cache món ăn vừa chọn ở màn hình 4 
                 context.read<ShoppingListViewModel>().unselectDish();
+              } else if (index == 3) {
+                // Load lại danh sách bí kíp để cập nhật bí kíp mới thêm hoặc sửa từ màn 3
+                context.read<SecretViewModel>().init();
               }
               setState(() {
                 _currentIndex = index;

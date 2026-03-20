@@ -60,7 +60,7 @@ class DishSelector extends StatelessWidget {
               labelText: 'Chọn Món Ăn',
               prefixIcon: const Icon(Icons.restaurant_menu),
             ),
-            value: selectedDish,
+            initialValue: selectedDish,
             items: availableDishes.map((dish) {
               return DropdownMenuItem<Dish>(
                 value: dish,

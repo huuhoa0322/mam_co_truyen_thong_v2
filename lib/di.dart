@@ -15,6 +15,7 @@ import 'interfaces/repositories/i_shopping_item_repository.dart';
 import 'viewmodels/home/home_view_model.dart';
 import 'viewmodels/recipe_details/recipe_details_view_model.dart';
 import 'viewmodels/shopping_list/shopping_list_view_model.dart';
+import 'viewmodels/family_secret/secret_view_model.dart';
 
 final getIt = GetIt.instance;
 
@@ -64,6 +65,13 @@ void setupDI() {
       shoppingRepo: getIt<IShoppingItemRepository>(),
       dishRepo: getIt<IDishRepository>(),
       ingredientRepo: getIt<IRecipeIngredientRepository>(),
+    ),
+  );
+  getIt.registerFactory<SecretViewModel>(
+    () => SecretViewModel(
+      secretRepo: getIt<IFamilySecretRepository>(),
+      dishRepo: getIt<IDishRepository>(),
+      categoryRepo: getIt<ICategoryRepository>(),
     ),
   );
 }

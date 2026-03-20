@@ -9,6 +9,16 @@ class LocalFamilySecretRepository implements IFamilySecretRepository {
   LocalFamilySecretRepository(this._db);
 
   @override
+  Future<List<FamilySecret>> getAll() async {
+    final db = await _db.database;
+    final maps = await db.query(
+      'family_secrets',
+      orderBy: 'updated_at DESC',
+    );
+    return maps.map(FamilySecretDto.fromMap).toList();
+  }
+
+  @override
   Future<FamilySecret?> getByDish(int dishId) async {
     final db = await _db.database;
     final maps = await db.query(

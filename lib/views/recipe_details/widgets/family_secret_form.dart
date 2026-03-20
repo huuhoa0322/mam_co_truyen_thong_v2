@@ -70,6 +70,23 @@ class FamilySecretForm extends StatelessWidget {
                       child: Text('"${secret.content}"',
                           style: const TextStyle(fontSize: 15, fontStyle: FontStyle.italic, color: Color(0xFF374151), height: 1.5)),
                     ),
+                    if (secret.tags.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: secret.tags.map((t) => Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: _primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: _primary.withValues(alpha: 0.2)),
+                            ),
+                            child: Text(t, style: const TextStyle(fontSize: 11, color: _primaryDark, fontStyle: FontStyle.italic)),
+                          )).toList(),
+                        ),
+                      ),
                     const SizedBox(height: 16),
                     Row(children: [
                       Expanded(
@@ -122,6 +139,7 @@ class FamilySecretForm extends StatelessWidget {
   void _showDialog(BuildContext context, FamilySecret? existing) {
     final titleCtrl = TextEditingController(text: existing?.title ?? '');
     final contentCtrl = TextEditingController(text: existing?.content ?? '');
+    final tagsCtrl = TextEditingController(text: existing?.tags.join(', ') ?? '');
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -130,18 +148,23 @@ class FamilySecretForm extends StatelessWidget {
           TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Tiêu đề (VD: Mẹo của Bà Nội)')),
           const SizedBox(height: 8),
           TextField(controller: contentCtrl, maxLines: 4, decoration: const InputDecoration(labelText: 'Nội dung bí kíp *')),
+          const SizedBox(height: 8),
+          TextField(controller: tagsCtrl, decoration: const InputDecoration(labelText: 'Thẻ tag (ngăn cách bởi dấu phẩy)')),
         ]),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
           ElevatedButton(
             onPressed: () {
               if (contentCtrl.text.isNotEmpty) {
+                final tags = tagsCtrl.text.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList();
+                
                 vm.saveFamilySecret(FamilySecret(
                   id: existing?.id,
                   dishId: dish.id!,
                   title: titleCtrl.text.isEmpty ? null : titleCtrl.text,
                   content: contentCtrl.text,
-                  tags: existing?.tags ?? [],
+                  tags: tags,
+
                 ));
                 Navigator.pop(ctx);
               }
