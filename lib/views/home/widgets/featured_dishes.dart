@@ -246,6 +246,9 @@ class _FeaturedDishesWidgetState extends State<FeaturedDishesWidget> {
     final nameController = TextEditingController(text: dish.name);
     final descController = TextEditingController(text: dish.description ?? '');
     final timeController = TextEditingController(text: dish.cookTimeMinutes.toString());
+    final servingsMinController = TextEditingController(text: dish.servingsMin.toString());
+    final servingsMaxController = TextEditingController(text: dish.servingsMax.toString());
+    final formKey = GlobalKey<FormState>();
     int? selectedCategory = dish.categoryId;
     bool isFeatured = dish.isFeatured;
     
@@ -256,12 +259,78 @@ class _FeaturedDishesWidgetState extends State<FeaturedDishesWidget> {
           return AlertDialog(
             title: const Text('Sửa món ăn nổi bật'),
             content: SingleChildScrollView(
-              child: Column(
+              child: Form(
+                key: formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Tên món ăn (Bắt buộc)')),
+                  TextFormField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: 'Tên món ăn *'),
+                    validator: (value) => (value == null || value.trim().isEmpty) ? 'Vui lòng nhập tên món ăn.' : null,
+                  ),
                   TextField(controller: descController, decoration: const InputDecoration(labelText: 'Mô tả')),
-                  TextField(controller: timeController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Thời gian (phút)')),
+                  TextFormField(
+                    controller: timeController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Thời gian (phút) *'),
+                    validator: (value) {
+                      final parsed = int.tryParse((value ?? '').trim());
+                      if (parsed == null || parsed <= 0) {
+                        return 'Thời gian phải là số nguyên > 0.';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('Khẩu phần (người)', style: TextStyle(fontSize: 12, color: Colors.black54)),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: servingsMinController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(labelText: 'Tối thiểu *'),
+                          onChanged: (_) => setState(() {}),
+                          validator: (value) {
+                            final parsed = int.tryParse((value ?? '').trim());
+                            if (parsed == null || parsed <= 0) {
+                              return 'Giá trị > 0';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextFormField(
+                          controller: servingsMaxController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(labelText: 'Tối đa *'),
+                          onChanged: (_) => setState(() {}),
+                          validator: (value) {
+                            final max = int.tryParse((value ?? '').trim());
+                            final min = int.tryParse(servingsMinController.text.trim());
+                            if (max == null || max <= 0) {
+                              return 'Giá trị > 0';
+                            }
+                            if (min == null || min <= 0) {
+                              return 'Kiểm tra tối thiểu';
+                            }
+                            if (max <= min) {
+                              return 'Phải lớn hơn tối thiểu';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<int>(
                     value: selectedCategory,
@@ -277,21 +346,32 @@ class _FeaturedDishesWidgetState extends State<FeaturedDishesWidget> {
                   ),
                 ],
               ),
+              ),
             ),
             actions: [
               TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
               ElevatedButton(
                 onPressed: () {
-                  if (nameController.text.isNotEmpty) {
-                    final updatedDish = dish.copyWith(
-                      name: nameController.text,
-                      description: descController.text,
-                      cookTimeMinutes: int.tryParse(timeController.text) ?? dish.cookTimeMinutes,
-                      categoryId: selectedCategory,
-                      isFeatured: isFeatured,
-                    );
-                    context.read<HomeViewModel>().updateDish(updatedDish);
+                  if (!(formKey.currentState?.validate() ?? false)) {
+                    return;
                   }
+
+                  final servingsMin = int.tryParse(servingsMinController.text.trim());
+                  final servingsMax = int.tryParse(servingsMaxController.text.trim());
+                  if (servingsMin == null || servingsMax == null) {
+                    return;
+                  }
+
+                  final updatedDish = dish.copyWith(
+                    name: nameController.text,
+                    description: descController.text,
+                    cookTimeMinutes: int.tryParse(timeController.text) ?? dish.cookTimeMinutes,
+                    servingsMin: servingsMin,
+                    servingsMax: servingsMax,
+                    categoryId: selectedCategory,
+                    isFeatured: isFeatured,
+                  );
+                  context.read<HomeViewModel>().updateDish(updatedDish);
                   Navigator.pop(ctx);
                 },
                 child: const Text('Lưu'),

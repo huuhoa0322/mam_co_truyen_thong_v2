@@ -168,6 +168,7 @@ class CategoryListWidget extends StatelessWidget {
 
   void _showAddCategoryDialog(BuildContext context) {
     final nameController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
     String? currentImageUrl;
 
     Future<void> pickImage(StateSetter setState) async {
@@ -194,39 +195,46 @@ class CategoryListWidget extends StatelessWidget {
         builder: (dialogCtx, setState) {
           return AlertDialog(
             title: const Text('Thêm Bộ sưu tập'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Tên danh mục')),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: () => pickImage(setState), 
-                      icon: const Icon(Icons.image), 
-                      label: const Text('Chọn ảnh')
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        currentImageUrl != null ? 'Đã chọn ảnh' : 'Chưa có ảnh',
-                        style: const TextStyle(fontSize: 12, overflow: TextOverflow.ellipsis),
+            content: Form(
+              key: formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: 'Tên danh mục *'),
+                    validator: (value) => (value == null || value.trim().isEmpty) ? 'Vui lòng nhập tên danh mục.' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () => pickImage(setState), 
+                        icon: const Icon(Icons.image), 
+                        label: const Text('Chọn ảnh')
                       ),
-                    )
-                  ],
-                ),
-              ],
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          currentImageUrl != null ? 'Đã chọn ảnh' : 'Chưa có ảnh',
+                          style: const TextStyle(fontSize: 12, overflow: TextOverflow.ellipsis),
+                        ),
+                      )
+                    ],
+                  ),
+                ],
+              ),
             ),
             actions: [
               TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
               ElevatedButton(
                 onPressed: () {
-                  if (nameController.text.isNotEmpty) {
-                    context.read<HomeViewModel>().createCategory(
-                      nameController.text, 
-                      currentImageUrl ?? 'https://cdn-icons-png.flaticon.com/512/3565/3565418.png'
-                    );
-                  }
+                  if (!(formKey.currentState?.validate() ?? false)) return;
+                  context.read<HomeViewModel>().createCategory(
+                    nameController.text,
+                    currentImageUrl ?? 'https://cdn-icons-png.flaticon.com/512/3565/3565418.png'
+                  );
                   Navigator.pop(ctx);
                 },
                 child: const Text('Thêm'),
@@ -268,6 +276,7 @@ class CategoryListWidget extends StatelessWidget {
 
   void _showEditCategoryDialog(BuildContext context, Category cat) {
     final nameController = TextEditingController(text: cat.name);
+    final formKey = GlobalKey<FormState>();
     String? currentImageUrl = cat.coverImageUrl;
     
     Future<void> pickImage(StateSetter setState) async {
@@ -294,42 +303,49 @@ class CategoryListWidget extends StatelessWidget {
         builder: (dialogCtx, setState) {
           return AlertDialog(
             title: const Text('Sửa Danh mục'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Tên danh mục')),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: () => pickImage(setState), 
-                      icon: const Icon(Icons.image), 
-                      label: const Text('Đổi ảnh')
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        currentImageUrl != null 
-                            ? (currentImageUrl!.startsWith('http') ? 'Ảnh trên mạng' : 'Đã chọn ảnh cục bộ') 
-                            : 'Chưa có ảnh',
-                        style: const TextStyle(fontSize: 12, overflow: TextOverflow.ellipsis),
+            content: Form(
+              key: formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: 'Tên danh mục *'),
+                    validator: (value) => (value == null || value.trim().isEmpty) ? 'Vui lòng nhập tên danh mục.' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () => pickImage(setState), 
+                        icon: const Icon(Icons.image), 
+                        label: const Text('Đổi ảnh')
                       ),
-                    )
-                  ],
-                ),
-              ],
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          currentImageUrl != null 
+                              ? (currentImageUrl!.startsWith('http') ? 'Ảnh trên mạng' : 'Đã chọn ảnh cục bộ') 
+                              : 'Chưa có ảnh',
+                          style: const TextStyle(fontSize: 12, overflow: TextOverflow.ellipsis),
+                        ),
+                      )
+                    ],
+                  ),
+                ],
+              ),
             ),
             actions: [
               TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
               ElevatedButton(
                 onPressed: () {
-                  if (nameController.text.isNotEmpty) {
-                    final updatedCategory = cat.copyWith(
-                      name: nameController.text,
-                      coverImageUrl: currentImageUrl ?? cat.coverImageUrl,
-                    );
-                    context.read<HomeViewModel>().updateCategory(updatedCategory);
-                  }
+                  if (!(formKey.currentState?.validate() ?? false)) return;
+                  final updatedCategory = cat.copyWith(
+                    name: nameController.text,
+                    coverImageUrl: currentImageUrl ?? cat.coverImageUrl,
+                  );
+                  context.read<HomeViewModel>().updateCategory(updatedCategory);
                   Navigator.pop(ctx);
                 },
                 child: const Text('Lưu'),
@@ -562,6 +578,9 @@ class CategoryListWidget extends StatelessWidget {
     final nameController = TextEditingController();
     final descController = TextEditingController();
     final timeController = TextEditingController(text: '30');
+    final servingsMinController = TextEditingController(text: '2');
+    final servingsMaxController = TextEditingController(text: '4');
+    final formKey = GlobalKey<FormState>();
     bool isFeatured = false;
     String selectedDifficulty = 'Trung bình';
     String? currentImageUrl;
@@ -591,12 +610,78 @@ class CategoryListWidget extends StatelessWidget {
           return AlertDialog(
             title: Text('Thêm món vào ${cat.name}'),
             content: SingleChildScrollView(
-              child: Column(
+              child: Form(
+                key: formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Tên món ăn (Bắt buộc)')),
+                  TextFormField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: 'Tên món ăn *'),
+                    validator: (value) => (value == null || value.trim().isEmpty) ? 'Vui lòng nhập tên món ăn.' : null,
+                  ),
                   TextField(controller: descController, decoration: const InputDecoration(labelText: 'Mô tả')),
-                  TextField(controller: timeController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Thời gian (phút)')),
+                  TextFormField(
+                    controller: timeController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Thời gian (phút) *'),
+                    validator: (value) {
+                      final parsed = int.tryParse((value ?? '').trim());
+                      if (parsed == null || parsed <= 0) {
+                        return 'Thời gian phải là số nguyên > 0.';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('Khẩu phần (người)', style: TextStyle(fontSize: 12, color: Colors.black54)),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: servingsMinController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(labelText: 'Tối thiểu *'),
+                          onChanged: (_) => setState(() {}),
+                          validator: (value) {
+                            final parsed = int.tryParse((value ?? '').trim());
+                            if (parsed == null || parsed <= 0) {
+                              return 'Giá trị > 0';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextFormField(
+                          controller: servingsMaxController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(labelText: 'Tối đa *'),
+                          onChanged: (_) => setState(() {}),
+                          validator: (value) {
+                            final max = int.tryParse((value ?? '').trim());
+                            final min = int.tryParse(servingsMinController.text.trim());
+                            if (max == null || max <= 0) {
+                              return 'Giá trị > 0';
+                            }
+                            if (min == null || min <= 0) {
+                              return 'Kiểm tra tối thiểu';
+                            }
+                            if (max <= min) {
+                              return 'Phải lớn hơn tối thiểu';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     value: selectedDifficulty,
@@ -629,25 +714,36 @@ class CategoryListWidget extends StatelessWidget {
                   ),
                 ],
               ),
+              ),
             ),
             actions: [
               TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
               ElevatedButton(
                 onPressed: () {
-                  if (nameController.text.isNotEmpty) {
-                    final newDish = Dish(
-                      categoryId: cat.id,
-                      name: nameController.text,
-                      description: descController.text,
-                      cookTimeMinutes: int.tryParse(timeController.text) ?? 30,
-                      difficulty: selectedDifficulty,
-                      isFeatured: isFeatured,
-                      imageUrl: currentImageUrl,
-                      createdAt: DateTime.now(),
-                      updatedAt: DateTime.now(),
-                    );
-                    context.read<HomeViewModel>().createDish(newDish);
+                  if (!(formKey.currentState?.validate() ?? false)) {
+                    return;
                   }
+
+                  final servingsMin = int.tryParse(servingsMinController.text.trim());
+                  final servingsMax = int.tryParse(servingsMaxController.text.trim());
+                  if (servingsMin == null || servingsMax == null) {
+                    return;
+                  }
+
+                  final newDish = Dish(
+                    categoryId: cat.id,
+                    name: nameController.text,
+                    description: descController.text,
+                    cookTimeMinutes: int.tryParse(timeController.text) ?? 30,
+                    difficulty: selectedDifficulty,
+                    servingsMin: servingsMin,
+                    servingsMax: servingsMax,
+                    isFeatured: isFeatured,
+                    imageUrl: currentImageUrl,
+                    createdAt: DateTime.now(),
+                    updatedAt: DateTime.now(),
+                  );
+                  context.read<HomeViewModel>().createDish(newDish);
                   Navigator.pop(ctx);
                 },
                 child: const Text('Thêm'),

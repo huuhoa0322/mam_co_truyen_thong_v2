@@ -10,6 +10,7 @@ import '../../../viewmodels/recipe_details/recipe_details_view_model.dart';
 const Color _primary = Color(0xFFD32F2F);
 const Color _primaryDark = Color(0xFFB71C1C);
 const Color _secondary = Color(0xFFFFC107);
+const Color _statsIconColor = _primary;
 
 // ── Hero Image + Stats Card ────────────────────────────────────────────────
 class RecipeInfoHeader extends StatelessWidget {
@@ -533,33 +534,20 @@ class _StatsCard extends StatelessWidget {
   Widget _servingsTile(BuildContext context) {
     final value = dish != null ? '${dish!.servingsMin}–${dish!.servingsMax} người' : '--';
     return Expanded(
-      child: GestureDetector(
-        onTap: dish != null ? () => _showServingsDialog(context) : null,
-        child: Column(children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              const Icon(Icons.restaurant_menu_outlined, color: _primary, size: 24),
-              if (dish != null)
-                Positioned(
-                  right: -10, top: -4,
-                  child: Icon(Icons.edit, size: 11, color: Colors.grey.shade400),
-                ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text('Khẩu phần', style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontWeight: FontWeight.w500, letterSpacing: 0.8)),
-          const SizedBox(height: 2),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF111827), fontSize: 12)),
-        ]),
-      ),
+      child: Column(children: [
+        const Icon(Icons.restaurant_menu_outlined, color: _statsIconColor, size: 24),
+        const SizedBox(height: 4),
+        Text('Khẩu phần', style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontWeight: FontWeight.w500, letterSpacing: 0.8)),
+        const SizedBox(height: 2),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF111827), fontSize: 12)),
+      ]),
     );
   }
 
   Widget _readonlyTile(IconData icon, String label, String value) {
     return Expanded(
       child: Column(children: [
-        Icon(icon, color: Colors.grey.shade400, size: 24),
+        Icon(icon, color: _statsIconColor, size: 24),
         const SizedBox(height: 4),
         Text(label, style: TextStyle(fontSize: 10, color: Colors.grey.shade400, fontWeight: FontWeight.w500, letterSpacing: 0.8)),
         const SizedBox(height: 2),
@@ -568,101 +556,4 @@ class _StatsCard extends StatelessWidget {
     );
   }
 
-  void _showServingsDialog(BuildContext context) {
-    if (dish == null) return;
-    final vm = context.read<RecipeDetailsViewModel>();
-    final minCtrl = TextEditingController(text: '${dish!.servingsMin}');
-    final maxCtrl = TextEditingController(text: '${dish!.servingsMax}');
-    String? errorText;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Row(children: [
-            Icon(Icons.restaurant_menu, color: _primary, size: 20),
-            SizedBox(width: 8),
-            Text('Chỉnh sửa khẩu phần', style: TextStyle(fontSize: 17)),
-          ]),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Số người ăn (tối thiểu – tối đa)', style: TextStyle(fontSize: 13, color: Colors.black54)),
-              const SizedBox(height: 10),
-              Row(children: [
-                Expanded(child: TextField(
-                  controller: minCtrl,
-                  keyboardType: TextInputType.number,
-                  textAlign: TextAlign.center,
-                  decoration: InputDecoration(
-                    labelText: 'Tối thiểu',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: _primary, width: 2),
-                    ),
-                  ),
-                  onChanged: (_) => setDialogState(() => errorText = null),
-                )),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12),
-                  child: Text('–', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                ),
-                Expanded(child: TextField(
-                  controller: maxCtrl,
-                  keyboardType: TextInputType.number,
-                  textAlign: TextAlign.center,
-                  decoration: InputDecoration(
-                    labelText: 'Tối đa',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: _primary, width: 2),
-                    ),
-                  ),
-                  onChanged: (_) => setDialogState(() => errorText = null),
-                )),
-              ]),
-              if (errorText != null) ...[
-                const SizedBox(height: 8),
-                Row(children: [
-                  const Icon(Icons.warning_amber_rounded, size: 15, color: Colors.redAccent),
-                  const SizedBox(width: 4),
-                  Text(errorText!, style: const TextStyle(fontSize: 12, color: Colors.redAccent)),
-                ]),
-              ],
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.save, size: 16),
-              label: const Text('Lưu'),
-              style: ElevatedButton.styleFrom(backgroundColor: _primary, foregroundColor: Colors.white),
-              onPressed: () {
-                final min = int.tryParse(minCtrl.text.trim());
-                final max = int.tryParse(maxCtrl.text.trim());
-                if (min == null || max == null) {
-                  setDialogState(() => errorText = 'Vui lòng nhập số hợp lệ.');
-                  return;
-                }
-                if (min <= 0 || max <= 0) {
-                  setDialogState(() => errorText = 'Khẩu phần phải lớn hơn 0.');
-                  return;
-                }
-                if (max <= min) {
-                  setDialogState(() => errorText = 'Tối đa phải lớn hơn tối thiểu.');
-                  return;
-                }
-                vm.updateDishInfo(servingsMin: min, servingsMax: max);
-                Navigator.pop(ctx);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

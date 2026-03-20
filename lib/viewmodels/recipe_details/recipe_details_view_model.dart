@@ -72,9 +72,22 @@ class RecipeDetailsViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _ingredients = await _ingredientRepo.getByDish(dish.id!);
-      _steps = await _stepRepo.getByDish(dish.id!);
-      _familySecret = await _secretRepo.getByDish(dish.id!);
+      if (dish.id != null) {
+        _dish = await _dishRepo.getById(dish.id!) ?? dish;
+      }
+
+      final dishId = _dish?.id;
+      if (dishId == null) {
+        _ingredients = [];
+        _steps = [];
+        _familySecret = null;
+        _cookTimerSeconds = 0;
+        return;
+      }
+
+      _ingredients = await _ingredientRepo.getByDish(dishId);
+      _steps = await _stepRepo.getByDish(dishId);
+      _familySecret = await _secretRepo.getByDish(dishId);
 
       // Calculate total cook timer from steps
       final totalMinutes = _steps.fold<int>(
