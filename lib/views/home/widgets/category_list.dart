@@ -139,12 +139,12 @@ class CategoryListWidget extends StatelessWidget {
                   ? Image.file(
                       File(cat.coverImageUrl!),
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported, color: Colors.white38),
+                      errorBuilder: (_, _, _) => const Icon(Icons.image_not_supported, color: Colors.white38),
                     )
                   : Image.network(
                       cat.coverImageUrl ?? '',
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported, color: Colors.white38),
+                      errorBuilder: (_, _, _) => const Icon(Icons.image_not_supported, color: Colors.white38),
                     ),
               ),
             ),
@@ -405,7 +405,7 @@ class CategoryListWidget extends StatelessWidget {
                           backgroundImage: cat.coverImageUrl != null && !cat.coverImageUrl!.startsWith('http')
                               ? FileImage(File(cat.coverImageUrl!)) as ImageProvider
                               : NetworkImage(cat.coverImageUrl ?? ''),
-                          onBackgroundImageError: (_, __) => const Icon(Icons.error),
+                          onBackgroundImageError: (_, _) => const Icon(Icons.error),
                         ),
                         title: Text(cat.name, style: const TextStyle(color: _tetCream, fontWeight: FontWeight.bold)),
                         trailing: Row(
@@ -506,7 +506,7 @@ class CategoryListWidget extends StatelessWidget {
                       controller: controller,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       itemCount: dishes.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final dish = dishes[index];
                         return ListTile(
@@ -524,14 +524,14 @@ class CategoryListWidget extends StatelessWidget {
                                   width: 60,
                                   height: 60,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Container(width: 60, height: 60, color: _tetRed),
+                                  errorBuilder: (_, _, _) => Container(width: 60, height: 60, color: _tetRed),
                                 )
                               : Image.network(
                                   dish.imageUrl ?? '',
                                   width: 60,
                                   height: 60,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Container(width: 60, height: 60, color: _tetRed),
+                                  errorBuilder: (_, _, _) => Container(width: 60, height: 60, color: _tetRed),
                                 ),
                           ),
                           title: Text(dish.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -684,7 +684,7 @@ class CategoryListWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: selectedDifficulty,
+                    initialValue: selectedDifficulty,
                     decoration: const InputDecoration(labelText: 'Độ khó'),
                     items: ['Dễ', 'Trung bình', 'Khó'].map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
                     onChanged: (val) => setState(() => selectedDifficulty = val ?? 'Trung bình'),

@@ -141,12 +141,12 @@ class _NewDishesWidgetState extends State<NewDishesWidget> {
                   ? Image.file(
                       File(dish.imageUrl!),
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(color: _tetRedLight),
+                      errorBuilder: (_, _, _) => Container(color: _tetRedLight),
                     )
                   : Image.network(
                       dish.imageUrl ?? '',
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(color: _tetRedLight),
+                      errorBuilder: (_, _, _) => Container(color: _tetRedLight),
                     ),
               ),
             ),
@@ -369,14 +369,14 @@ class _NewDishesWidgetState extends State<NewDishesWidget> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: ['Dễ', 'Trung bình', 'Khó'].contains(selectedDifficulty) ? selectedDifficulty : 'Dễ',
+                    initialValue: ['Dễ', 'Trung bình', 'Khó'].contains(selectedDifficulty) ? selectedDifficulty : 'Dễ',
                     decoration: const InputDecoration(labelText: 'Độ khó'),
                     items: ['Dễ', 'Trung bình', 'Khó'].map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
                     onChanged: (val) => setState(() => selectedDifficulty = val),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<int>(
-                    value: selectedCategory,
+                    initialValue: selectedCategory,
                     decoration: const InputDecoration(labelText: 'Bộ sưu tập'),
                     items: categories.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))).toList(),
                     onChanged: (val) => setState(() => selectedCategory = val),
@@ -560,14 +560,14 @@ class _NewDishesWidgetState extends State<NewDishesWidget> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: selectedDifficulty,
+                    initialValue: selectedDifficulty,
                     decoration: const InputDecoration(labelText: 'Độ khó'),
                     items: ['Dễ', 'Trung bình', 'Khó'].map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
                     onChanged: (val) => setState(() => selectedDifficulty = val ?? 'Trung bình'),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<int>(
-                    value: selectedCategory,
+                    initialValue: selectedCategory,
                     decoration: const InputDecoration(labelText: 'Bộ sưu tập'),
                     items: categories.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))).toList(),
                     onChanged: (val) => setState(() => selectedCategory = val),
@@ -679,7 +679,7 @@ class _NewDishesWidgetState extends State<NewDishesWidget> {
                     controller: controller,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     itemCount: widget.dishes.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final dish = widget.dishes[index];
                       return ListTile(
@@ -697,14 +697,14 @@ class _NewDishesWidgetState extends State<NewDishesWidget> {
                                   width: 60,
                                   height: 60,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Container(width: 60, height: 60, color: _tetRed),
+                                  errorBuilder: (_, _, _) => Container(width: 60, height: 60, color: _tetRed),
                                 )
                               : Image.network(
                                   dish.imageUrl ?? '',
                                   width: 60,
                                   height: 60,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Container(width: 60, height: 60, color: _tetRed),
+                                  errorBuilder: (_, _, _) => Container(width: 60, height: 60, color: _tetRed),
                                 ),
                         ),
                         title: Text(dish.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),

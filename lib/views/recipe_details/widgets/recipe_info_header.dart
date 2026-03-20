@@ -196,7 +196,7 @@ class _DishPickerSheetState extends State<_DishPickerSheet> {
                     controller: controller,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     itemCount: _filteredDishes.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    separatorBuilder: (_, _) => const Divider(height: 1),
                     itemBuilder: (_, i) {
                       final dish = _filteredDishes[i];
                       return _DishListItem(
@@ -230,7 +230,7 @@ class _DishListItem extends StatelessWidget {
             width: 60,
             height: 60,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
+            errorBuilder: (_, _, _) => Container(
               width: 60,
               height: 60,
               color: _primary,
@@ -242,7 +242,7 @@ class _DishListItem extends StatelessWidget {
             width: 60,
             height: 60,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
+            errorBuilder: (_, _, _) => Container(
               width: 60,
               height: 60,
               color: _primary,
@@ -429,11 +429,11 @@ class _HeroSection extends StatelessWidget {
             borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(32), bottomRight: Radius.circular(32)),
             child: dish?.imageUrl != null && !dish!.imageUrl!.startsWith('http')
                 ? Image.file(File(dish!.imageUrl!), fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(color: _primaryDark, child: const Center(child: Icon(Icons.restaurant, size: 80, color: Colors.white54))))
+                    errorBuilder: (_, _, _) => Container(color: _primaryDark, child: const Center(child: Icon(Icons.restaurant, size: 80, color: Colors.white54))))
                 : Image.network(
                     dish?.imageUrl ?? 'https://cdn-icons-png.flaticon.com/512/3565/3565418.png',
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(color: _primaryDark, child: const Center(child: Icon(Icons.restaurant, size: 80, color: Colors.white54))),
+                    errorBuilder: (_, _, _) => Container(color: _primaryDark, child: const Center(child: Icon(Icons.restaurant, size: 80, color: Colors.white54))),
                   ),
           ),
           ClipRRect(

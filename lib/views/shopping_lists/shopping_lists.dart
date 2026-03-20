@@ -685,9 +685,3 @@ class _ShoppingItem {
   });
 }
 
-class _NavItem {
-  final IconData icon;
-  final String label;
-
-  _NavItem({required this.icon, required this.label});
-}

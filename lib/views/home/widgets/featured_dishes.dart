@@ -55,7 +55,7 @@ class _FeaturedDishesWidgetState extends State<FeaturedDishesWidget> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               scrollDirection: Axis.horizontal,
               itemCount: widget.dishes.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 16),
+              separatorBuilder: (_, _) => const SizedBox(width: 16),
               itemBuilder: (context, index) {
                 final dish = widget.dishes[index];
                 return SizedBox(
@@ -84,7 +84,7 @@ class _FeaturedDishesWidgetState extends State<FeaturedDishesWidget> {
                                 ? Image.file(
                                     File(dish.imageUrl!),
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Container(color: Colors.red[800]),
+                                    errorBuilder: (_, _, _) => Container(color: Colors.red[800]),
                                   )
                                 : Image.network(
                                     dish.imageUrl ?? 'https://cdn-icons-png.flaticon.com/512/3565/3565418.png',
@@ -333,7 +333,7 @@ class _FeaturedDishesWidgetState extends State<FeaturedDishesWidget> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<int>(
-                    value: selectedCategory,
+                    initialValue: selectedCategory,
                     decoration: const InputDecoration(labelText: 'Bộ sưu tập'),
                     items: categories.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))).toList(),
                     onChanged: (val) => setState(() => selectedCategory = val),
