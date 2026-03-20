@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 
 class BudgetHeader extends StatelessWidget {
@@ -15,11 +16,12 @@ class BudgetHeader extends StatelessWidget {
     const Color primary = Color(0xFFD32F2F);
     const Color secondary = Color(0xFFFFD700);
 
-    final remaining = totalEstimatedBudget - totalActualSpent;
+    final remaining = max(0, totalEstimatedBudget - totalActualSpent);
     final percentage = totalEstimatedBudget > 0 
-        ? (totalActualSpent / totalEstimatedBudget).clamp(0.0, 1.0) 
+        ? (totalActualSpent / totalEstimatedBudget)
         : 0.0;
     
+    final barPercentage = percentage.clamp(0.0, 1.0);
     final percentageText = '${(percentage * 100).toStringAsFixed(0)}%';
 
     return Container(
@@ -133,7 +135,7 @@ class BudgetHeader extends StatelessWidget {
                 ),
                 child: FractionallySizedBox(
                   alignment: Alignment.centerLeft,
-                  widthFactor: percentage,
+                  widthFactor: barPercentage,
                   child: Container(
                     decoration: BoxDecoration(
                       color: secondary,

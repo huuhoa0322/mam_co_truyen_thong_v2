@@ -4,6 +4,7 @@ import '../../domain/entities/shopping_item.dart';
 import '../../interfaces/repositories/i_dish_repository.dart';
 import '../../interfaces/repositories/i_recipe_ingredient_repository.dart';
 import '../../interfaces/repositories/i_shopping_item_repository.dart';
+import '../../domain/entities/recipe_ingredient.dart';
 
 class ShoppingListViewModel extends ChangeNotifier {
   final IShoppingItemRepository _shoppingRepo;
@@ -64,27 +65,7 @@ class ShoppingListViewModel extends ChangeNotifier {
     _setLoading(true);
     try {
       _selectedDish = dish;
-      List<ShoppingItem> loadedItems = await _shoppingRepo.getByDish(dish.id!);
-      
-      if (loadedItems.isEmpty) {
-        // If no shopping items exist for this dish yet, we generate from ingredients
-        final ingredients = await _ingredientRepo.getByDish(dish.id!);
-        if (ingredients.isNotEmpty) {
-          final newShoppingItems = ingredients.map((ing) {
-            return ShoppingItem(
-              dishId: dish.id,
-              ingredientName: ing.name,
-              quantity: ing.amount,
-              unit: ing.unit,
-              estimatedPrice: 0, // Users will input this later
-            );
-          }).toList();
-          
-          await _shoppingRepo.createBatch(newShoppingItems);
-          loadedItems = await _shoppingRepo.getByDish(dish.id!);
-        }
-      }
-      _items = loadedItems;
+      await _reloadItems();
     } finally {
       _setLoading(false);
     }
@@ -99,7 +80,15 @@ class ShoppingListViewModel extends ChangeNotifier {
   Future<void> addShoppingItem(ShoppingItem item) async {
     if (_selectedDish?.id == null) return;
     
-    // Ensure the item belongs to the selected dish
+    // Add to ingredients first (Source of Truth)
+    await _ingredientRepo.create(RecipeIngredient(
+      dishId: _selectedDish!.id!,
+      name: item.ingredientName,
+      amount: item.quantity,
+      unit: item.unit,
+    ));
+
+    // Also add to shopping list for pricing info
     final newItem = item.dishId == _selectedDish!.id 
       ? item 
       : item.copyWith(dishId: _selectedDish!.id);
@@ -109,7 +98,25 @@ class ShoppingListViewModel extends ChangeNotifier {
   }
 
   Future<void> updateShoppingItem(ShoppingItem item) async {
-    await _shoppingRepo.update(item);
+    if (_selectedDish?.id == null) return;
+
+    // Update ingredients (Source of Truth) -> find by name
+    final ings = await _ingredientRepo.getByDish(_selectedDish!.id!);
+    final oldIng = ings.where((ing) => ing.name.toLowerCase() == item.ingredientName.toLowerCase()).firstOrNull;
+    if (oldIng != null) {
+      await _ingredientRepo.update(oldIng.copyWith(
+        name: item.ingredientName,
+        amount: item.quantity,
+        unit: item.unit,
+      ));
+    }
+    
+    // Update shopping item if it exists, or create it
+    if (item.id != null) {
+      await _shoppingRepo.update(item);
+    } else {
+      await _shoppingRepo.create(item);
+    }
     await _reloadItems();
   }
 
@@ -118,14 +125,52 @@ class ShoppingListViewModel extends ChangeNotifier {
     await updateShoppingItem(updatedItem);
   }
 
-  Future<void> deleteShoppingItem(int id) async {
-    await _shoppingRepo.delete(id);
+  Future<void> deleteShoppingItem(ShoppingItem itemToDelete) async {
+    // Delete from shopping items
+    if (itemToDelete.id != null) {
+      await _shoppingRepo.delete(itemToDelete.id!);
+    }
+
+    // Also delete from ingredients
+    if (_selectedDish?.id != null) {
+      final ings = await _ingredientRepo.getByDish(_selectedDish!.id!);
+      final ing = ings.where((i) => i.name.toLowerCase() == itemToDelete.ingredientName.toLowerCase()).firstOrNull;
+      if (ing?.id != null) {
+        await _ingredientRepo.delete(ing!.id!);
+      }
+    }
+
     await _reloadItems();
   }
 
   Future<void> _reloadItems() async {
     if (_selectedDish?.id == null) return;
-    _items = await _shoppingRepo.getByDish(_selectedDish!.id!);
+    
+    // 1. Fetch Ingredients (Source of Truth)
+    final ingredients = await _ingredientRepo.getByDish(_selectedDish!.id!);
+    
+    // 2. Fetch Pricing info from ShoppingItems
+    final shoppingRecords = await _shoppingRepo.getByDish(_selectedDish!.id!);
+    final shoppingMap = {
+      for (var record in shoppingRecords) record.ingredientName.toLowerCase(): record
+    };
+
+    // 3. Merge them
+    _items = ingredients.map((ing) {
+      final record = shoppingMap[ing.name.toLowerCase()];
+      return ShoppingItem(
+        id: record?.id, // Could be null if pricing info wasn't created yet
+        dishId: _selectedDish!.id!,
+        ingredientName: ing.name,
+        quantity: ing.amount,
+        unit: ing.unit,
+        estimatedPrice: record?.estimatedPrice ?? 0,
+        actualPrice: record?.actualPrice,
+        isChecked: record?.isChecked ?? false,
+        notes: record?.notes,
+      );
+    }).toList();
+
     notifyListeners();
   }
 

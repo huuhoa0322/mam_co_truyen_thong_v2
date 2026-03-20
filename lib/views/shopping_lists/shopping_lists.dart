@@ -52,7 +52,7 @@ class _ShoppingListsPageState extends State<ShoppingListsPage> {
                         ShoppingItemsList(
                           items: vm.items,
                           onCheckChanged: (item, val) => vm.toggleItemCheck(item, val),
-                          onDelete: (id) => vm.deleteShoppingItem(id),
+                          onDelete: (item) => vm.deleteShoppingItem(item),
                           onEdit: (item) => _showItemForm(context, vm, item),
                           onAdd: () => _showItemForm(context, vm, null),
                         ),

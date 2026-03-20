@@ -5,7 +5,7 @@ class ShoppingItemsList extends StatelessWidget {
   final List<ShoppingItem> items;
   final Function(ShoppingItem, bool) onCheckChanged;
   final Function(ShoppingItem) onEdit;
-  final Function(int) onDelete;
+  final Function(ShoppingItem) onDelete;
   final VoidCallback onAdd;
 
   const ShoppingItemsList({
@@ -191,8 +191,8 @@ class ShoppingItemsList extends StatelessWidget {
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              if (item.id != null) {
-                onDelete(item.id!);
+              if (item.ingredientName.isNotEmpty) {
+                onDelete(item);
               }
             },
             child: const Text('Xóa', style: TextStyle(color: Colors.red)),
