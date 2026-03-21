@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
 class AppDatabase {
   static final AppDatabase instance = AppDatabase._init();
@@ -17,20 +19,35 @@ class AppDatabase {
   }
 
   Future<Database> _initDB(String filePath) async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, filePath);
+    if (kIsWeb) {
+      databaseFactory = databaseFactoryFfiWeb;
+      return await openDatabase(
+        filePath,
+        version: 1,
+        onConfigure: (db) async {
+          await db.execute('PRAGMA foreign_keys = ON');
+          try {
+            await db.execute('PRAGMA journal_mode = WAL');
+          } catch (_) {}
+        },
+        onCreate: _createDB,
+      );
+    } else {
+      final dbPath = await getDatabasesPath();
+      final path = join(dbPath, filePath);
 
-    return await openDatabase(
-      path,
-      version: 1,
-      onConfigure: (db) async {
-        await db.execute('PRAGMA foreign_keys = ON');
-        try {
-          await db.execute('PRAGMA journal_mode = WAL');
-        } catch (_) {}
-      },
-      onCreate: _createDB,
-    );
+      return await openDatabase(
+        path,
+        version: 1,
+        onConfigure: (db) async {
+          await db.execute('PRAGMA foreign_keys = ON');
+          try {
+            await db.execute('PRAGMA journal_mode = WAL');
+          } catch (_) {}
+        },
+        onCreate: _createDB,
+      );
+    }
   }
 
   Future<void> _createDB(Database db, int version) async {
