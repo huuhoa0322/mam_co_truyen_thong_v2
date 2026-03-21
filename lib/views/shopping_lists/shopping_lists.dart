@@ -54,6 +54,8 @@ class _ShoppingListsPageState extends State<ShoppingListsPage> {
                           onCheckChanged: (item, val) => vm.toggleItemCheck(item, val),
                           onDelete: (item) => vm.deleteShoppingItem(item),
                           onEdit: (item) => _showItemForm(context, vm, item),
+                          onEstimatePerItemAI: vm.suggestEstimatedPricePerItem,
+                          isEstimatingAI: vm.isEstimatingBudget,
                           onAdd: () => _showItemForm(context, vm, null),
                         ),
                       const SizedBox(height: 40),
@@ -142,6 +144,7 @@ class _ShoppingListsPageState extends State<ShoppingListsPage> {
           BudgetHeader(
             totalEstimatedBudget: vm.totalEstimatedBudget,
             totalActualSpent: vm.totalActualSpent,
+            hasItems: vm.items.isNotEmpty,
           ),
         ],
       ),

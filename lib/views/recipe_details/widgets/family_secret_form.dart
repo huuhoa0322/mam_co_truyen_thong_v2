@@ -142,15 +142,41 @@ class FamilySecretForm extends StatelessWidget {
     final tagsCtrl = TextEditingController(text: existing?.tags.join(', ') ?? '');
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(existing == null ? 'Thêm bí kíp' : 'Sửa bí kíp'),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Tiêu đề (VD: Mẹo của Bà Nội)')),
-          const SizedBox(height: 8),
-          TextField(controller: contentCtrl, maxLines: 4, decoration: const InputDecoration(labelText: 'Nội dung bí kíp *')),
-          const SizedBox(height: 8),
-          TextField(controller: tagsCtrl, decoration: const InputDecoration(labelText: 'Thẻ tag (ngăn cách bởi dấu phẩy)')),
-        ]),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text(existing == null ? 'Thêm bí kíp' : 'Sửa bí kíp'),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Tiêu đề (VD: Mẹo của Bà Nội)')),
+            const SizedBox(height: 8),
+            TextField(controller: contentCtrl, maxLines: 4, decoration: const InputDecoration(labelText: 'Nội dung bí kíp *')),
+            const SizedBox(height: 8),
+            if (vm.isSuggestingSecret)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: _primary)),
+              )
+            else
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: () async {
+                    // Start suggesting
+                    setDialogState(() {}); // vm.isSuggestingSecret will be evaluated via vm
+                    final draft = await vm.suggestSecretDraftFromAI();
+                    if (draft != null) {
+                      titleCtrl.text = draft.title;
+                      contentCtrl.text = draft.content;
+                      tagsCtrl.text = draft.tags.join(', ');
+                    }
+                    setDialogState(() {});
+                  },
+                  icon: const Icon(Icons.auto_awesome, color: _primary, size: 18),
+                  label: const Text('Hỏi AI gợi ý nội dung', style: TextStyle(color: _primary)),
+                ),
+              ),
+            const SizedBox(height: 8),
+            TextField(controller: tagsCtrl, decoration: const InputDecoration(labelText: 'Thẻ tag (ngăn cách bởi dấu phẩy)')),
+          ]),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
           ElevatedButton(
@@ -173,6 +199,7 @@ class FamilySecretForm extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

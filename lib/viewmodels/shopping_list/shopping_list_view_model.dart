@@ -5,19 +5,23 @@ import '../../interfaces/repositories/i_dish_repository.dart';
 import '../../interfaces/repositories/i_recipe_ingredient_repository.dart';
 import '../../interfaces/repositories/i_shopping_item_repository.dart';
 import '../../domain/entities/recipe_ingredient.dart';
+import '../../services/ai_service.dart';
 
 class ShoppingListViewModel extends ChangeNotifier {
   final IShoppingItemRepository _shoppingRepo;
   final IDishRepository _dishRepo;
   final IRecipeIngredientRepository _ingredientRepo;
+  final AiService _aiService;
 
   ShoppingListViewModel({
     required IShoppingItemRepository shoppingRepo,
     required IDishRepository dishRepo,
     required IRecipeIngredientRepository ingredientRepo,
+    required AiService aiService,
   })  : _shoppingRepo = shoppingRepo,
         _dishRepo = dishRepo,
-        _ingredientRepo = ingredientRepo;
+        _ingredientRepo = ingredientRepo,
+        _aiService = aiService;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -30,6 +34,50 @@ class ShoppingListViewModel extends ChangeNotifier {
 
   List<ShoppingItem> _items = [];
   List<ShoppingItem> get items => _items;
+
+  bool _isEstimatingBudget = false;
+  bool get isEstimatingBudget => _isEstimatingBudget;
+
+  Future<void> suggestEstimatedPricePerItem() async {
+    if (_selectedDish == null || _items.isEmpty) return;
+
+    _isEstimatingBudget = true;
+    notifyListeners();
+
+    try {
+      final ingredientList = _items
+          .map((e) => '${e.ingredientName} | ${e.quantity} ${e.unit}')
+          .toList();
+      final drafts = await _aiService.suggestIngredientPriceDrafts(
+        _selectedDish!.name,
+        ingredientList,
+      );
+
+      if (drafts.isEmpty) return;
+
+      final draftMap = {
+        for (final draft in drafts)
+          draft.ingredientName.toLowerCase().trim(): draft.estimatedPrice,
+      };
+
+      for (final item in _items) {
+        final suggested = draftMap[item.ingredientName.toLowerCase().trim()];
+        if (suggested == null || suggested <= 0) continue;
+
+        final updated = item.copyWith(estimatedPrice: suggested);
+        if (updated.id != null) {
+          await _shoppingRepo.update(updated);
+        } else {
+          await _shoppingRepo.create(updated);
+        }
+      }
+
+      await _reloadItems();
+    } finally {
+      _isEstimatingBudget = false;
+      notifyListeners();
+    }
+  }
 
   // Computed totals
   int get totalEstimatedBudget {

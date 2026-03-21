@@ -6,6 +6,8 @@ class ShoppingItemsList extends StatelessWidget {
   final Function(ShoppingItem, bool) onCheckChanged;
   final Function(ShoppingItem) onEdit;
   final Function(ShoppingItem) onDelete;
+  final Future<void> Function() onEstimatePerItemAI;
+  final bool isEstimatingAI;
   final VoidCallback onAdd;
 
   const ShoppingItemsList({
@@ -14,6 +16,8 @@ class ShoppingItemsList extends StatelessWidget {
     required this.onCheckChanged,
     required this.onEdit,
     required this.onDelete,
+    required this.onEstimatePerItemAI,
+    required this.isEstimatingAI,
     required this.onAdd,
   });
 
@@ -64,9 +68,25 @@ class ShoppingItemsList extends StatelessWidget {
                 color: primary,
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.add_circle, color: primary),
-              onPressed: onAdd,
+            Row(
+              children: [
+                if (isEstimatingAI)
+                  const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: primary),
+                  )
+                else
+                  IconButton(
+                    icon: const Icon(Icons.auto_awesome, color: primary),
+                    tooltip: 'Gợi ý giá dự kiến theo từng nguyên liệu',
+                    onPressed: onEstimatePerItemAI,
+                  ),
+                IconButton(
+                  icon: const Icon(Icons.add_circle, color: primary),
+                  onPressed: onAdd,
+                ),
+              ],
             ),
           ],
         ),
@@ -163,12 +183,12 @@ class ShoppingItemsList extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    'Dự kiến: $priceEst',
+                    'Giá dự kiến: $priceEst',
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.normal),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Thực tế: $priceAct',
+                    'Thực tế chi: $priceAct',
                     style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: primary),
                   ),
                 ],

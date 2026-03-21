@@ -16,10 +16,14 @@ import 'viewmodels/home/home_view_model.dart';
 import 'viewmodels/recipe_details/recipe_details_view_model.dart';
 import 'viewmodels/shopping_list/shopping_list_view_model.dart';
 import 'viewmodels/family_secret/secret_view_model.dart';
+import 'services/ai_service.dart';
 
 final getIt = GetIt.instance;
 
 void setupDI() {
+  // AI Service
+  getIt.registerLazySingleton<AiService>(() => AiService());
+
   // Database
   getIt.registerLazySingleton<AppDatabase>(() => AppDatabase.instance);
 
@@ -58,6 +62,7 @@ void setupDI() {
       ingredientRepo: getIt<IRecipeIngredientRepository>(),
       stepRepo: getIt<IRecipeStepRepository>(),
       secretRepo: getIt<IFamilySecretRepository>(),
+      aiService: getIt<AiService>(),
     ),
   );
   getIt.registerFactory<ShoppingListViewModel>(
@@ -65,6 +70,7 @@ void setupDI() {
       shoppingRepo: getIt<IShoppingItemRepository>(),
       dishRepo: getIt<IDishRepository>(),
       ingredientRepo: getIt<IRecipeIngredientRepository>(),
+      aiService: getIt<AiService>(),
     ),
   );
   getIt.registerFactory<SecretViewModel>(

@@ -8,22 +8,26 @@ import '../../interfaces/repositories/i_dish_repository.dart';
 import '../../interfaces/repositories/i_family_secret_repository.dart';
 import '../../interfaces/repositories/i_recipe_ingredient_repository.dart';
 import '../../interfaces/repositories/i_recipe_step_repository.dart';
+import '../../services/ai_service.dart';
 
 class RecipeDetailsViewModel extends ChangeNotifier {
   final IDishRepository _dishRepo;
   final IRecipeIngredientRepository _ingredientRepo;
   final IRecipeStepRepository _stepRepo;
   final IFamilySecretRepository _secretRepo;
+  final AiService _aiService;
 
   RecipeDetailsViewModel({
     required IDishRepository dishRepo,
     required IRecipeIngredientRepository ingredientRepo,
     required IRecipeStepRepository stepRepo,
     required IFamilySecretRepository secretRepo,
+    required AiService aiService,
   })  : _dishRepo = dishRepo,
         _ingredientRepo = ingredientRepo,
         _stepRepo = stepRepo,
-        _secretRepo = secretRepo;
+        _secretRepo = secretRepo,
+        _aiService = aiService;
 
   // ── State ────────────────────────────────────────────────────────────────
 
@@ -44,6 +48,62 @@ class RecipeDetailsViewModel extends ChangeNotifier {
 
   FamilySecret? _familySecret;
   FamilySecret? get familySecret => _familySecret;
+
+  // ── AI States ────────────────────────────────────────────────────────────
+
+  bool _isSuggestingIngredients = false;
+  bool get isSuggestingIngredients => _isSuggestingIngredients;
+
+  bool _isSuggestingSteps = false;
+  bool get isSuggestingSteps => _isSuggestingSteps;
+
+  bool _isSuggestingSecret = false;
+  bool get isSuggestingSecret => _isSuggestingSecret;
+
+  Future<List<AiIngredientDraft>> suggestIngredientDraftsFromAI() async {
+    if (_dish == null || _dish!.name.isEmpty) return [];
+    _isSuggestingIngredients = true;
+    notifyListeners();
+    final result = await _aiService.suggestIngredientDrafts(_dish!.name);
+    _isSuggestingIngredients = false;
+    notifyListeners();
+    return result;
+  }
+
+  Future<List<AiStepDraft>> suggestStepDraftsFromAI() async {
+    if (_dish == null || _dish!.name.isEmpty) return [];
+    _isSuggestingSteps = true;
+    notifyListeners();
+    final result = await _aiService.suggestStepDrafts(_dish!.name);
+    _isSuggestingSteps = false;
+    notifyListeners();
+    return result;
+  }
+
+  Future<AiSecretDraft?> suggestSecretDraftFromAI() async {
+    if (_dish == null || _dish!.name.isEmpty) return null;
+    _isSuggestingSecret = true;
+    notifyListeners();
+    final result = await _aiService.suggestSecretDraft(_dish!.name);
+    _isSuggestingSecret = false;
+    notifyListeners();
+    return result;
+  }
+
+  Future<List<String>> suggestIngredientsFromAI() async {
+    final drafts = await suggestIngredientDraftsFromAI();
+    return drafts.map((e) => e.name).toList();
+  }
+
+  Future<List<String>> suggestStepsFromAI() async {
+    final drafts = await suggestStepDraftsFromAI();
+    return drafts.map((e) => e.description).toList();
+  }
+
+  Future<String?> suggestSecretFromAI() async {
+    final draft = await suggestSecretDraftFromAI();
+    return draft?.content;
+  }
 
   // ── Global cook timer ────────────────────────────────────────────────────
 

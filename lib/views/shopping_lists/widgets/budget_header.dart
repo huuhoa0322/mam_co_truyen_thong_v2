@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 class BudgetHeader extends StatelessWidget {
   final int totalEstimatedBudget;
   final int totalActualSpent;
+  final bool hasItems;
 
   const BudgetHeader({
     super.key,
     required this.totalEstimatedBudget,
     required this.totalActualSpent,
+    this.hasItems = false,
   });
 
   @override
@@ -172,6 +174,7 @@ class BudgetHeader extends StatelessWidget {
                   ),
                 ],
               ),
+              if (hasItems) const SizedBox(height: 8),
             ],
           ),
         ],

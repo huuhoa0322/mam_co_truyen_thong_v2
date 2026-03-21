@@ -27,6 +27,15 @@ class IngredientsList extends StatelessWidget {
                 Text('Nguyên liệu', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _primary)),
               ]),
               Row(children: [
+                if (vm.isSuggestingIngredients)
+                  const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: _primary))
+                else
+                  IconButton(
+                    icon: const Icon(Icons.auto_awesome, color: _primary),
+                    tooltip: 'Gợi ý AI',
+                    onPressed: () => _handleSuggestIngredients(context),
+                  ),
+                const SizedBox(width: 4),
                 Text('${vm.ingredients.length} loại', style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
                 const SizedBox(width: 8),
                 IconButton(icon: const Icon(Icons.add_circle, color: _primary), onPressed: () => _showAddDialog(context)),
@@ -82,6 +91,85 @@ class IngredientsList extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _handleSuggestIngredients(BuildContext context) async {
+    final drafts = await vm.suggestIngredientDraftsFromAI();
+    if (drafts.isEmpty || !context.mounted) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Không thể lấy gợi ý từ AI, vui lòng thử lại.')));
+      }
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final selected = List.generate(drafts.length, (index) => true);
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              title: const Row(children: [
+                Icon(Icons.auto_awesome, color: _secondary),
+                SizedBox(width: 8),
+                Text('Gợi ý từ AI', style: TextStyle(fontSize: 18, color: _primary)),
+              ]),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: drafts.length,
+                  itemBuilder: (ctx, i) {
+                    final draft = drafts[i];
+                    final amount = draft.amount % 1 == 0
+                        ? draft.amount.toInt().toString()
+                        : draft.amount.toString();
+                    return CheckboxListTile(
+                      value: selected[i],
+                      title: Text(
+                        '${draft.name} - $amount ${draft.unit}',
+                        style: const TextStyle(fontSize: 15),
+                      ),
+                      subtitle: draft.notes != null && draft.notes!.isNotEmpty
+                          ? Text(draft.notes!, style: const TextStyle(fontSize: 12))
+                          : null,
+                      activeColor: _primary,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (val) {
+                        setDialogState(() => selected[i] = val ?? false);
+                      },
+                    );
+                  },
+                ),
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+                ElevatedButton(
+                  onPressed: () {
+                    for (int i = 0; i < drafts.length; i++) {
+                      if (selected[i]) {
+                        final draft = drafts[i];
+                        vm.addIngredient(RecipeIngredient(
+                          dishId: dish.id!,
+                          name: draft.name,
+                          amount: draft.amount,
+                          unit: draft.unit,
+                          notes: draft.notes,
+                        ));
+                      }
+                    }
+                    Navigator.pop(ctx);
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: _primary, foregroundColor: Colors.white),
+                  child: const Text('Thêm đã chọn'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }

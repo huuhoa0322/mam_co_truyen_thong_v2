@@ -10,9 +10,11 @@ import 'viewmodels/family_secret/secret_view_model.dart';
 import 'viewmodels/home/home_view_model.dart';
 import 'viewmodels/recipe_details/recipe_details_view_model.dart';
 import 'viewmodels/shopping_list/shopping_list_view_model.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   setupDI();
   runApp(const MyApp());
 }

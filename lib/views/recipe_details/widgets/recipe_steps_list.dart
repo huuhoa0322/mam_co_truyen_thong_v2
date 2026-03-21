@@ -26,10 +26,21 @@ class RecipeStepsList extends StatelessWidget {
                 SizedBox(width: 8),
                 Text('Cách làm', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _primary)),
               ]),
-              IconButton(
-                icon: const Icon(Icons.add_circle, color: _primary),
-                onPressed: vm.isStepCrudLocked ? null : () => _showAddDialog(context),
-              ),
+              Row(children: [
+                if (vm.isSuggestingSteps)
+                  const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: _primary))
+                else
+                  IconButton(
+                    icon: const Icon(Icons.auto_awesome, color: _primary),
+                    tooltip: 'Gợi ý AI',
+                    onPressed: vm.isStepCrudLocked ? null : () => _handleSuggestSteps(context),
+                  ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.add_circle, color: _primary),
+                  onPressed: vm.isStepCrudLocked ? null : () => _showAddDialog(context),
+                ),
+              ]),
             ],
           ),
           if (vm.steps.isEmpty)
@@ -145,6 +156,102 @@ class RecipeStepsList extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _handleSuggestSteps(BuildContext context) async {
+    final drafts = await vm.suggestStepDraftsFromAI();
+    if (drafts.isEmpty || !context.mounted) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Không thể lấy gợi ý từ AI, vui lòng thử lại.')));
+      }
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final selected = List.generate(drafts.length, (index) => true);
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              title: const Row(children: [
+                Icon(Icons.auto_awesome, color: _secondary),
+                SizedBox(width: 8),
+                Text('Gợi ý từ AI', style: TextStyle(fontSize: 18, color: _primary)),
+              ]),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: drafts.length,
+                  itemBuilder: (ctx, i) {
+                    final draft = drafts[i];
+                    return CheckboxListTile(
+                      value: selected[i],
+                      title: Text(draft.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      subtitle: Text(
+                        '${draft.description}${draft.timerMinutes != null ? ' (${draft.timerMinutes}p)' : ''}',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      activeColor: _primary,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (val) {
+                        setDialogState(() => selected[i] = val ?? false);
+                      },
+                    );
+                  },
+                ),
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+                ElevatedButton(
+                  onPressed: () {
+                    final currentTotal = vm.steps.fold<int>(0, (sum, s) => sum + (s.timerMinutes ?? 0));
+                    final selectedTotal = drafts
+                        .asMap()
+                        .entries
+                        .where((e) => selected[e.key])
+                        .fold<int>(0, (sum, e) => sum + (e.value.timerMinutes ?? 0));
+                    final projectedTotal = currentTotal + selectedTotal;
+                    if (projectedTotal > dish.cookTimeMinutes) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Tổng thời gian các bước ($projectedTotal phút) không được vượt quá thời gian món (${dish.cookTimeMinutes} phút).',
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+
+                    int count = vm.steps.length;
+                    for (int i = 0; i < drafts.length; i++) {
+                      if (selected[i]) {
+                        final draft = drafts[i];
+                        count++;
+                        final timerMins = draft.timerMinutes;
+                        vm.addStep(RecipeStep(
+                          dishId: dish.id!,
+                          stepNumber: count,
+                          title: draft.title,
+                          description: draft.description,
+                          timerMinutes: timerMins,
+                          timerLabel: timerMins != null ? 'Hẹn giờ (${timerMins}p)' : null,
+                        ));
+                      }
+                    }
+                    Navigator.pop(ctx);
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: _primary, foregroundColor: Colors.white),
+                  child: const Text('Thêm đã chọn'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }
