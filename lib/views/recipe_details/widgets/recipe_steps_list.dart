@@ -159,7 +159,8 @@ class _StepTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isCrudLocked = vm.isStepCrudLocked;
-    final hasTimer = step.timerMinutes != null && step.id != null;
+    final timerMinutesValue = step.timerMinutes ?? 0;
+    final hasTimer = timerMinutesValue > 0 && step.id != null;
     final isSelected = hasTimer && vm.activeStepTimerStep?.id == step.id;
     final isRunning = hasTimer && vm.isStepTimerRunning(step.id!);
     final canTapClock = hasTimer && vm.canSelectStepTimer;
@@ -247,7 +248,7 @@ class _StepTile extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (isRunning || remaining < (step.timerMinutes! * 60)) ...[
+                    if (isRunning || remaining < (timerMinutesValue * 60)) ...[
                       const SizedBox(width: 8),
                       GestureDetector(onTap: () => vm.resetStepTimer(step.id!), child: const Icon(Icons.refresh, size: 18, color: Colors.grey)),
                     ],

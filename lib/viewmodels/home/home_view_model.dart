@@ -21,6 +21,12 @@ class HomeViewModel extends ChangeNotifier {
   List<Dish> get recentDishes => _recentDishes;
   List<Dish> get allDishes => _recentDishes; // All dishes from database
 
+  String _searchQuery = '';
+  String get searchQuery => _searchQuery;
+  List<Dish> get filteredFeaturedDishes =>
+      _featuredDishes.where(_matchesSearch).toList();
+  List<Dish> get filteredRecentDishes => _recentDishes.where(_matchesSearch).toList();
+
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
@@ -56,6 +62,28 @@ class HomeViewModel extends ChangeNotifier {
       debugPrint('Get Dishes By Category Error: $e');
       return [];
     }
+  }
+
+  List<Dish> getFilteredDishesByCategory(int categoryId) {
+    return _recentDishes
+        .where((dish) => dish.categoryId == categoryId && _matchesSearch(dish))
+        .toList();
+  }
+
+  void setSearchQuery(String value) {
+    final nextValue = value.trim();
+    if (nextValue == _searchQuery) return;
+    _searchQuery = nextValue;
+    notifyListeners();
+  }
+
+  bool _matchesSearch(Dish dish) {
+    if (_searchQuery.isEmpty) return true;
+    final keyword = _searchQuery.toLowerCase();
+    final inName = dish.name.toLowerCase().contains(keyword);
+    final inDescription =
+        (dish.description ?? '').toLowerCase().contains(keyword);
+    return inName || inDescription;
   }
 
   // ── Category CRUD ────────────────────────────────────────────────────────

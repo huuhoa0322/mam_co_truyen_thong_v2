@@ -157,7 +157,7 @@ class RecipeDetailsViewModel extends ChangeNotifier {
 
       // Init per-step timers
       for (final step in _steps) {
-        if (step.timerMinutes != null && step.id != null) {
+        if ((step.timerMinutes ?? 0) > 0 && step.id != null) {
           final initialSeconds = step.timerMinutes! * 60;
           _stepTimerSeconds[step.id!] = initialSeconds;
           _stepTimerInitialSeconds[step.id!] = initialSeconds;
@@ -360,7 +360,21 @@ class RecipeDetailsViewModel extends ChangeNotifier {
       }
     }
     if (step == null) return;
-    _stepTimerSeconds[stepId] = (step.timerMinutes ?? 0) * 60;
+    final timerMinutes = step.timerMinutes ?? 0;
+    if (timerMinutes <= 0) {
+      _stepTimerSeconds.remove(stepId);
+      _stepTimerInitialSeconds.remove(stepId);
+      _stepTimerRunning.remove(stepId);
+      if (_activeStepTimerId == stepId) {
+        _activeStepTimerId = null;
+      }
+      notifyListeners();
+      return;
+    }
+
+    _stepTimerSeconds[stepId] = timerMinutes * 60;
+    _stepTimerInitialSeconds[stepId] = timerMinutes * 60;
+    _stepTimerRunning[stepId] = false;
     _activeStepTimerId = stepId;
     notifyListeners();
   }
@@ -469,8 +483,8 @@ class RecipeDetailsViewModel extends ChangeNotifier {
   void _resetAllStepTimersToInitial() {
     for (final step in _steps) {
       final stepId = step.id;
-      final timerMinutes = step.timerMinutes;
-      if (stepId == null || timerMinutes == null) continue;
+      final timerMinutes = step.timerMinutes ?? 0;
+      if (stepId == null || timerMinutes <= 0) continue;
 
       _stepTimerSeconds[stepId] = timerMinutes * 60;
       _stepTimerInitialSeconds[stepId] = timerMinutes * 60;
@@ -505,10 +519,11 @@ class RecipeDetailsViewModel extends ChangeNotifier {
     final validIds = <int>{};
     for (final step in _steps) {
       final id = step.id;
-      if (id == null || step.timerMinutes == null) continue;
+      final timerMinutes = step.timerMinutes ?? 0;
+      if (id == null || timerMinutes <= 0) continue;
       validIds.add(id);
 
-      final initialSeconds = step.timerMinutes! * 60;
+      final initialSeconds = timerMinutes * 60;
       final previousInitial = _stepTimerInitialSeconds[id];
 
       if (previousInitial != null && previousInitial != initialSeconds) {

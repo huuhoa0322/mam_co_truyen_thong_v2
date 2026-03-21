@@ -21,26 +21,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    )..repeat(reverse: true);
-    _pulseAnimation =
-        Tween<double>(begin: 0.4, end: 1.0).animate(_pulseController);
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
+class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
@@ -74,12 +55,12 @@ class _HomeScreenState extends State<HomeScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildHeader(),
-                        _buildSearchBar(),
-                        if (viewModel.featuredDishes.isNotEmpty)
-                          FeaturedDishesWidget(dishes: viewModel.featuredDishes),
+                        _buildSearchBar(viewModel),
+                        if (viewModel.filteredFeaturedDishes.isNotEmpty)
+                          FeaturedDishesWidget(dishes: viewModel.filteredFeaturedDishes),
                         CategoryListWidget(categories: viewModel.categories),
-                        if (viewModel.recentDishes.isNotEmpty)
-                          NewDishesWidget(dishes: viewModel.recentDishes),
+                        if (viewModel.filteredRecentDishes.isNotEmpty)
+                          NewDishesWidget(dishes: viewModel.filteredRecentDishes),
                       ],
                     ),
                   );
@@ -98,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Left: title block
+          // Title block only (notification bell removed)
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,55 +123,13 @@ class _HomeScreenState extends State<HomeScreen>
               ],
             ),
           ),
-          // Right: notification button
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _tetRedLight,
-                  borderRadius: BorderRadius.circular(999),
-                  border:
-                      Border.all(color: _tetGoldDim, width: 1),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 6,
-                    ),
-                  ],
-                ),
-                child: const Icon(Icons.notifications_outlined,
-                    color: _tetGold, size: 24),
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: AnimatedBuilder(
-                  animation: _pulseAnimation,
-                  builder: (context, _) => Opacity(
-                    opacity: _pulseAnimation.value,
-                    child: Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: _tetGold,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: _tetRed, width: 1.5),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
   }
 
   // ── Search bar ────────────────────────────────────────────────────────────
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(HomeViewModel viewModel) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
       child: Container(
@@ -211,8 +150,9 @@ class _HomeScreenState extends State<HomeScreen>
             Expanded(
               child: TextField(
                 style: const TextStyle(color: _tetCream, fontSize: 14),
+                onChanged: viewModel.setSearchQuery,
                 decoration: InputDecoration(
-                  hintText: 'Tìm kiếm Bánh Chưng, Nem Rán...',
+                  hintText: 'Tìm kiếm món ăn...',
                   hintStyle: TextStyle(
                       color: _tetCream.withValues(alpha: 0.5), fontSize: 14),
                   border: InputBorder.none,
@@ -220,16 +160,7 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
             ),
-            Container(
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: _tetGold.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: _tetGold.withValues(alpha: 0.2), width: 1),
-              ),
-              child: const Icon(Icons.tune, color: _tetGold, size: 20),
-            ),
+            const SizedBox(width: 14),
           ],
         ),
       ),

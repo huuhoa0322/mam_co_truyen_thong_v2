@@ -22,15 +22,23 @@ class FamilySecretPage extends StatelessWidget {
             return CustomScrollView(
               slivers: [
                 _buildAppBar(),
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _FilterHeaderDelegate(
+                    backgroundColor: background,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                      child: _buildFilterSection(context, vm),
+                    ),
+                  ),
+                ),
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 24),
-                        _buildFilterSection(context, vm),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 8),
                         
                         if (vm.isLoading)
                           const Center(
@@ -77,30 +85,45 @@ class FamilySecretPage extends StatelessWidget {
   SliverAppBar _buildAppBar() {
     return SliverAppBar(
       expandedHeight: 120,
-      backgroundColor: Colors.transparent,
+      collapsedHeight: 72,
+      toolbarHeight: 72,
+      backgroundColor: background,
+      surfaceTintColor: Colors.transparent,
+      shadowColor: Colors.transparent,
       elevation: 0,
+      scrolledUnderElevation: 0,
+      forceElevated: false,
       pinned: true,
       flexibleSpace: FlexibleSpaceBar(
-        titlePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        centerTitle: false,
+        collapseMode: CollapseMode.pin,
+        expandedTitleScale: 1.0,
+        titlePadding: const EdgeInsetsDirectional.only(start: 16, bottom: 18, end: 16),
         title: const Text(
           'Kho Tàng Bí Kíp',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: primary,
             fontWeight: FontWeight.bold,
             fontFamily: 'Playfair Display',
+            height: 1.2,
           ),
         ),
-        background: Stack(
-          children: [
-            Positioned(
-              right: -50,
-              top: -50,
-              child: Opacity(
-                opacity: 0.05,
-                child: Icon(Icons.auto_stories, size: 200, color: primary),
+        background: Container(
+          color: background,
+          child: Stack(
+            children: [
+              Positioned(
+                right: -50,
+                top: -50,
+                child: Opacity(
+                  opacity: 0.05,
+                  child: Icon(Icons.auto_stories, size: 200, color: primary),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -223,3 +246,35 @@ class FamilySecretPage extends StatelessWidget {
     );
   }
 }
+
+class _FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  final Color backgroundColor;
+
+  _FilterHeaderDelegate({
+    required this.child,
+    required this.backgroundColor,
+  });
+
+  @override
+  double get minExtent => 98;
+
+  @override
+  double get maxExtent => 98;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: backgroundColor,
+      child: child,
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _FilterHeaderDelegate oldDelegate) {
+    return oldDelegate.child != child ||
+        oldDelegate.backgroundColor != backgroundColor;
+  }
+}
+

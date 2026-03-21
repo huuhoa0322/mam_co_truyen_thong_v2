@@ -477,17 +477,15 @@ class _HeroSection extends StatelessWidget {
           ),
           Positioned(
             top: MediaQuery.of(context).padding.top + 8, left: 16, right: 16,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _circleBtn(Icons.arrow_back, () => _backToDishSelection(context)),
-                Row(children: [
-                  _circleBtn(Icons.favorite_border, () {}),
-                  const SizedBox(width: 12),
-                  _circleBtn(Icons.share_outlined, () {}),
-                ]),
-              ],
-            ),
+            child: dish == null
+                ? const SizedBox.shrink()
+                : Align(
+                    alignment: Alignment.centerLeft,
+                    child: _circleBtn(
+                      Icons.arrow_back,
+                      () => _backToDishSelection(context),
+                    ),
+                  ),
           ),
           Positioned(
             bottom: 24, left: 24, right: 24,

@@ -58,33 +58,40 @@ class _RecipeDetailsBody extends StatelessWidget {
           final dish = vm.dish; // Lấy dish từ ViewModel làm source of truth
           return Stack(
             children: [
-              SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 120),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    RecipeInfoHeader(dish: dish),
-                    if (dish == null)
-                      SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.6,
-                        child: const Center(
-                          child: EmptyDishPrompt(),
-                        ),
-                      )
-                    else if (vm.isLoading)
-                      const Padding(
-                        padding: EdgeInsets.all(48),
-                        child: Center(child: CircularProgressIndicator(color: Color(0xFFD32F2F))),
-                      )
-                    else ...[
-                      if (vm.isCookTimerRunning || vm.cookTimerSeconds > 0)
-                        CookTimerBanner(vm: vm),
-                      IngredientsList(vm: vm, dish: dish),
-                      RecipeStepsList(vm: vm, dish: dish),
-                      FamilySecretForm(vm: vm, dish: dish),
-                    ],
-                  ],
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  RecipeInfoHeader(dish: dish),
+                  if (dish != null && !vm.isLoading && (vm.isCookTimerRunning || vm.cookTimerSeconds > 0))
+                    CookTimerBanner(vm: vm),
+                  Expanded(
+                    child: dish == null
+                        ? const Padding(
+                            padding: EdgeInsets.only(bottom: 120),
+                            child: Center(child: EmptyDishPrompt()),
+                          )
+                        : vm.isLoading
+                            ? const Padding(
+                                padding: EdgeInsets.only(bottom: 120),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    color: Color(0xFFD32F2F),
+                                  ),
+                                ),
+                              )
+                            : SingleChildScrollView(
+                                padding: const EdgeInsets.only(bottom: 120),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    IngredientsList(vm: vm, dish: dish),
+                                    RecipeStepsList(vm: vm, dish: dish),
+                                    FamilySecretForm(vm: vm, dish: dish),
+                                  ],
+                                ),
+                              ),
+                  ),
+                ],
               ),
               RecipeBottomBar(vm: vm, dish: dish),
             ],

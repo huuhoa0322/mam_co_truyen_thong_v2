@@ -440,13 +440,7 @@ class CategoryListWidget extends StatelessWidget {
     );
   }
 
-  void _showCategoryDishesBottomSheet(BuildContext parentContext, Category cat) async {
-    final viewModel = parentContext.read<HomeViewModel>();
-    final dishes = await viewModel.getDishesByCategory(cat.id!);
-    
-    // ignore: use_build_context_synchronously
-    if (!parentContext.mounted) return;
-
+  void _showCategoryDishesBottomSheet(BuildContext parentContext, Category cat) {
     showModalBottomSheet(
       context: parentContext,
       isScrollControlled: true,
@@ -461,7 +455,10 @@ class CategoryListWidget extends StatelessWidget {
           minChildSize: 0.5,
           maxChildSize: 0.95,
           builder: (_, controller) {
-            return Column(
+            return Consumer<HomeViewModel>(
+              builder: (context, viewModel, child) {
+                final dishes = viewModel.getFilteredDishesByCategory(cat.id!);
+                return Column(
               children: [
                 const SizedBox(height: 16),
                 Container(
@@ -542,16 +539,12 @@ class CategoryListWidget extends StatelessWidget {
                               IconButton(
                                 icon: const Icon(Icons.edit, color: _tetGold),
                                 onPressed: () {
-                                  Navigator.pop(ctx);
-                                  // Can trigger showEditDishDialog here if we extract it outside, or just delegate 
-                                  // For simplicity we show a toast or implement edit dialog if needed
-                                  ScaffoldMessenger.of(parentContext).showSnackBar(const SnackBar(content: Text('Vui lòng sửa ở mục Món Ngon Phải Thử')));
+                                  _showEditDishInCategoryDialog(parentContext, dish);
                                 },
                               ),
                               IconButton(
                                 icon: const Icon(Icons.delete, color: Colors.redAccent),
                                 onPressed: () {
-                                  Navigator.pop(ctx);
                                   parentContext.read<HomeViewModel>().deleteDish(dish.id!);
                                 },
                               ),
@@ -567,10 +560,215 @@ class CategoryListWidget extends StatelessWidget {
                     ),
                   ),
               ],
-            );
+                );
+                  },
+                );
           },
         );
       },
+    );
+  }
+
+  void _showEditDishInCategoryDialog(BuildContext context, Dish dish) {
+    final categories = context.read<HomeViewModel>().categories;
+    final nameController = TextEditingController(text: dish.name);
+    final descController = TextEditingController(text: dish.description ?? '');
+    final timeController = TextEditingController(text: dish.cookTimeMinutes.toString());
+    final servingsMinController = TextEditingController(text: dish.servingsMin.toString());
+    final servingsMaxController = TextEditingController(text: dish.servingsMax.toString());
+    final formKey = GlobalKey<FormState>();
+    int? selectedCategory = dish.categoryId;
+    bool isFeatured = dish.isFeatured;
+    String selectedDifficulty = dish.difficulty;
+    String? currentImageUrl = dish.imageUrl;
+
+    Future<void> pickImage(StateSetter setState) async {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile == null) return;
+
+      final appDir = await getApplicationDocumentsDirectory();
+      final imagesDir = Directory('${appDir.path}/assets/images');
+      if (!await imagesDir.exists()) {
+        await imagesDir.create(recursive: true);
+      }
+
+      final fileName =
+          '${DateTime.now().millisecondsSinceEpoch}_${p.basename(pickedFile.path)}';
+      final savedFile = await File(pickedFile.path).copy('${imagesDir.path}/$fileName');
+      setState(() {
+        currentImageUrl = savedFile.path;
+      });
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogCtx, setState) {
+          return AlertDialog(
+            title: const Text('Sửa món trong bộ sưu tập'),
+            content: SingleChildScrollView(
+              child: Form(
+                key: formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: nameController,
+                      decoration: const InputDecoration(labelText: 'Tên món ăn *'),
+                      validator: (value) =>
+                          (value == null || value.trim().isEmpty) ? 'Vui lòng nhập tên món ăn.' : null,
+                    ),
+                    TextField(
+                      controller: descController,
+                      decoration: const InputDecoration(labelText: 'Mô tả'),
+                    ),
+                    TextFormField(
+                      controller: timeController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Thời gian (phút) *'),
+                      validator: (value) {
+                        final parsed = int.tryParse((value ?? '').trim());
+                        if (parsed == null || parsed <= 0) {
+                          return 'Thời gian phải là số nguyên > 0.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('Khẩu phần (người)', style: TextStyle(fontSize: 12, color: Colors.black54)),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: servingsMinController,
+                            keyboardType: TextInputType.number,
+                            onChanged: (_) => setState(() {}),
+                            decoration: const InputDecoration(labelText: 'Tối thiểu *'),
+                            validator: (value) {
+                              final parsed = int.tryParse((value ?? '').trim());
+                              if (parsed == null || parsed <= 0) {
+                                return 'Giá trị > 0';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextFormField(
+                            controller: servingsMaxController,
+                            keyboardType: TextInputType.number,
+                            onChanged: (_) => setState(() {}),
+                            decoration: const InputDecoration(labelText: 'Tối đa *'),
+                            validator: (value) {
+                              final max = int.tryParse((value ?? '').trim());
+                              final min = int.tryParse(servingsMinController.text.trim());
+                              if (max == null || max <= 0) {
+                                return 'Giá trị > 0';
+                              }
+                              if (min == null || min <= 0) {
+                                return 'Kiểm tra tối thiểu';
+                              }
+                              if (max <= min) {
+                                return 'Phải lớn hơn tối thiểu';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: ['Dễ', 'Trung bình', 'Khó'].contains(selectedDifficulty)
+                          ? selectedDifficulty
+                          : 'Dễ',
+                      decoration: const InputDecoration(labelText: 'Độ khó'),
+                      items: ['Dễ', 'Trung bình', 'Khó']
+                          .map((d) => DropdownMenuItem(value: d, child: Text(d)))
+                          .toList(),
+                      onChanged: (val) => setState(() => selectedDifficulty = val ?? 'Trung bình'),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<int>(
+                      initialValue: selectedCategory,
+                      decoration: const InputDecoration(labelText: 'Bộ sưu tập'),
+                      items: categories
+                          .map((c) => DropdownMenuItem(value: c.id, child: Text(c.name)))
+                          .toList(),
+                      onChanged: (val) => setState(() => selectedCategory = val),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () => pickImage(setState),
+                          icon: const Icon(Icons.image),
+                          label: const Text('Chọn ảnh mới'),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            currentImageUrl != null
+                                ? (currentImageUrl!.startsWith('http')
+                                    ? 'Ảnh trên mạng'
+                                    : 'Đã chọn ảnh cục bộ')
+                                : 'Chưa có ảnh',
+                            style: const TextStyle(fontSize: 12, overflow: TextOverflow.ellipsis),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SwitchListTile(
+                      title: const Text('Đánh dấu Gợi ý món ngon'),
+                      contentPadding: EdgeInsets.zero,
+                      value: isFeatured,
+                      onChanged: (val) => setState(() => isFeatured = val),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+              ElevatedButton(
+                onPressed: () {
+                  if (!(formKey.currentState?.validate() ?? false)) {
+                    return;
+                  }
+
+                  final servingsMin = int.tryParse(servingsMinController.text.trim());
+                  final servingsMax = int.tryParse(servingsMaxController.text.trim());
+                  if (servingsMin == null || servingsMax == null) {
+                    return;
+                  }
+
+                  final updatedDish = dish.copyWith(
+                    name: nameController.text,
+                    description: descController.text,
+                    cookTimeMinutes: int.tryParse(timeController.text) ?? dish.cookTimeMinutes,
+                    difficulty: selectedDifficulty,
+                    servingsMin: servingsMin,
+                    servingsMax: servingsMax,
+                    categoryId: selectedCategory,
+                    isFeatured: isFeatured,
+                    imageUrl: currentImageUrl,
+                  );
+                  context.read<HomeViewModel>().updateDish(updatedDish);
+                  Navigator.pop(ctx);
+                },
+                child: const Text('Lưu'),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 

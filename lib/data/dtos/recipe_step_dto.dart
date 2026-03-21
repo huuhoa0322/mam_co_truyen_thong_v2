@@ -22,8 +22,8 @@ class RecipeStepDto {
       'step_number': step.stepNumber,
       'title': step.title,
       'description': step.description,
-      if (step.timerMinutes != null) 'timer_minutes': step.timerMinutes,
-      if (step.timerLabel != null) 'timer_label': step.timerLabel,
+      'timer_minutes': step.timerMinutes,
+      'timer_label': step.timerLabel,
       if (step.createdAt != null) 'created_at': step.createdAt!.toIso8601String(),
       if (step.updatedAt != null) 'updated_at': step.updatedAt!.toIso8601String(),
     };

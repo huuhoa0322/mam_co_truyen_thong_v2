@@ -1,4 +1,6 @@
 class RecipeStep {
+  static const Object _unset = Object();
+
   final int? id;
   final int dishId;
   final int stepNumber;
@@ -27,8 +29,8 @@ class RecipeStep {
     int? stepNumber,
     String? title,
     String? description,
-    int? timerMinutes,
-    String? timerLabel,
+    Object? timerMinutes = _unset,
+    Object? timerLabel = _unset,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -38,8 +40,12 @@ class RecipeStep {
       stepNumber: stepNumber ?? this.stepNumber,
       title: title ?? this.title,
       description: description ?? this.description,
-      timerMinutes: timerMinutes ?? this.timerMinutes,
-      timerLabel: timerLabel ?? this.timerLabel,
+      timerMinutes: identical(timerMinutes, _unset)
+          ? this.timerMinutes
+          : timerMinutes as int?,
+      timerLabel: identical(timerLabel, _unset)
+          ? this.timerLabel
+          : timerLabel as String?,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
