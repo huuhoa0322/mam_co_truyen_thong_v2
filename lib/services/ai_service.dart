@@ -88,10 +88,16 @@ class AiService {
 
   Future<List<AiIngredientDraft>> suggestIngredientDrafts(String dishName) async {
     final prompt =
-        'Tra ve DUY NHAT JSON array. Moi phan tu la object voi cac key: '
-        'name (string), amount (number), unit (string), notes (string hoac rong). '
-        'Goi y nguyen lieu cho mon "$dishName". '
-        'Khong markdown, khong giai thich.';
+        'Bạn là một đầu bếp truyền thống Việt Nam kỳ cựu với nhiều năm kinh nghiệm nấu các món ăn gia đình. '
+        'Người dùng đang cần sự giúp đỡ chuẩn bị nguyên liệu cho món "$dishName". '
+        'Hãy liệt kê ĐẦY ĐỦ các nguyên liệu cần thiết, bao gồm cả gia vị nhỏ, '
+        'với số lượng và đơn vị cụ thể phù hợp với khẩu phần của người ăn. '
+        'Trả về DUY NHẤT một JSON array, mỗi phần tử là object với các key sau: '
+        '"name" (string – tên nguyên liệu tiếng Việt), '
+        '"amount" (number – số lượng), '
+        '"unit" (string – đơn vị: g, kg, ml, l, quả, lạng, muỗng cà phê, muỗng súp, ...), '
+        '"notes" (string – mẹo chọn nguyên liệu hoặc ghi chú thêm, để rỗng nếu không có). '
+        'CHỈ trả về JSON array, KHÔNG markdown, KHÔNG giải thích, KHÔNG thêm văn bản trước/sau JSON.';
     final result = await _generate(prompt);
     final json = _extractJson(result);
     if (json == null) return [];
@@ -126,11 +132,14 @@ class AiService {
 
   Future<List<AiStepDraft>> suggestStepDrafts(String dishName) async {
     final prompt =
-        'Tra ve DUY NHAT JSON array. Moi phan tu la object voi cac key: '
-        'title (string), description (string), timerMinutes (number hoac null). '
-        'Goi y cach lam cho mon "$dishName". '
-        'Neu khong can hen gio thi timerMinutes = null. '
-        'Khong markdown, khong giai thich.';
+        'Bạn là một đầu bếp truyền thống Việt Nam kỳ cựu, thuộc lòng từng bước chuẩn bị và nấu món ăn gia truyền. '
+        'Hãy hướng dẫn cách làm món "$dishName" theo từng bước rõ ràng, sắp xếp theo trình tự thực tế. '
+        'Mỗi bước nên bao gồm thao tác cụ thể và thời gian ước lượng. '
+        'Trả về DUY NHẤT một JSON array, mỗi phần tử là object với các key sau: '
+        '"title" (string – tên ngắn gọn của bước, ví dụ: "Sơ chế rau", "Ướp thịt", "Xào trên lửa lớn"), '
+        '"description" (string – mô tả chi tiết các thao tác trong bước đó), '
+        '"timerMinutes" (number – thời gian tính bằng phút NẾU cần hẹn giờ, hoặc null nếu không cần). '
+        'CHỈ trả về JSON array, KHÔNG markdown, KHÔNG giải thích, KHÔNG thêm văn bản trước/sau JSON.';
     final result = await _generate(prompt);
     final json = _extractJson(result);
     if (json == null) return [];
@@ -163,10 +172,15 @@ class AiService {
 
   Future<AiSecretDraft?> suggestSecretDraft(String dishName) async {
     final prompt =
-        'Tra ve DUY NHAT JSON object voi cac key: '
-        'title (string), content (string), tags (array string). '
-        'Goi y bi kip gia truyen cho mon "$dishName". '
-        'Khong markdown, khong giai thich.';
+        'Bạn là một bà nội/mẹ với nhiều năm nấu ăn gia đình, nắm giữ những bí kíp nấu ăn gia truyền quý giá '
+        'được truyền lại qua nhiều thế hệ. '
+        'Hãy chia sẻ MỘT bí kíp quan trọng nhất để nấu món "$dishName" thật ngon và đặc trưng gia đình. '
+        'Bí kíp nên cụ thể, thiết thực và chứa đựng kinh nghiệm thực tế (không phải lý thuyết chung chung). '
+        'Trả về DUY NHẤT một JSON object với các key sau: '
+        '"title" (string – tiêu đề bí kíp, ví dụ: "Mẹo ướp thịt của Bà", "Bí quyết nước dùng trong"), '
+        '"content" (string – nội dung bí kíp chi tiết, viết theo phong cách kể chuyện thân thuộc), '
+        '"tags" (array of string – 3–5 từ khoá liên quan, ví dụ: ["ướp gia vị", "chọn nguyên liệu"]). '
+        'CHỈ trả về JSON object, KHÔNG markdown, KHÔNG giải thích, KHÔNG thêm văn bản trước/sau JSON.';
     final result = await _generate(prompt);
     final json = _extractJson(result);
     if (json == null) return null;
@@ -211,10 +225,15 @@ class AiService {
 
     final ingredientList = ingredients.map((e) => '- $e').join('\n');
     final prompt =
-        'Tra ve DUY NHAT JSON array. Moi phan tu la object voi cac key: '
-        'ingredientName (string), estimatedPrice (integer). '
-        'Du lieu nguyen lieu cho mon "$dishName":\n$ingredientList\n'
-        'Chi tra ve JSON, khong markdown, khong giai thich.';
+        'Bạn là một người nội trợ Việt Nam kinh nghiệm, thường xuyên đi chợ và nắm rõ giá cả thị trường hiện tại. '
+        'Hãy ước tính GIÁ MUA tại chợ (tính bằng VNĐ) cho từng nguyên liệu dưới đây, '
+        'phù hợp với món "$dishName". '
+        'Sử dụng mức giá trung bình tại chợ truyền thống ở Việt Nam (không phải siêu thị cao cấp). '
+        'Danh sách nguyên liệu:\n$ingredientList\n'
+        'Trả về DUY NHẤT một JSON array, mỗi phần tử là object với các key sau: '
+        '"ingredientName" (string – tên nguyên liệu, viết lại đúng chính xác như trong danh sách), '
+        '"estimatedPrice" (integer – giá ước tính tính bằng VNĐ cho số lượng đã cho, là số nguyên). '
+        'CHỈ trả về JSON array, KHÔNG markdown, KHÔNG giải thích, KHÔNG thêm văn bản trước/sau JSON.';
 
     final result = await _generate(prompt);
     final json = _extractJson(result);
