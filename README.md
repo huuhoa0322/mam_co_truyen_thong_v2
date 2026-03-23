@@ -4,9 +4,9 @@
 
 | Field        | Details                          |
 |--------------|----------------------------------|
-| **Student**  |                                  |
-| **Class Code**|                                 |
-| **Course**   | PRM392 / PRM393                  |
+| **Student**  | Do Huu Hoa                                 |
+| **Class Code**| SE1873 - JS(IT)                                |
+| **Course**   | PRM393 - Mobile Programming                  |
 
 ---
 
