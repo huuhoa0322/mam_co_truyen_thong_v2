@@ -6,9 +6,7 @@ import 'package:path/path.dart' as p;
 import '../../../domain/entities/category.dart';
 import '../../../domain/entities/dish.dart';
 import 'package:provider/provider.dart';
-import '../../main_screen.dart'; // Import MainScreen
 import '../../../viewmodels/home/home_view_model.dart';
-import '../../../viewmodels/recipe_details/recipe_details_view_model.dart'; // Import RecipeDetailsViewModel
 
 const _tetRed = Color(0xFF8B0000);
 const _tetRedLight = Color(0xFFA52A2A);
@@ -18,8 +16,13 @@ const _tetCream = Color(0xFFFFFDD0);
 
 class CategoryListWidget extends StatelessWidget {
   final List<Category> categories;
+  final ValueChanged<Dish> onDishSelected;
   
-  const CategoryListWidget({super.key, required this.categories});
+  const CategoryListWidget({
+    super.key,
+    required this.categories,
+    required this.onDishSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -552,8 +555,7 @@ class CategoryListWidget extends StatelessWidget {
                           ),
                           onTap: () {
                             Navigator.pop(ctx);
-                            parentContext.read<RecipeDetailsViewModel>().loadByDish(dish);
-                            MainScreen.switchTab(parentContext, 1);
+                            onDishSelected(dish);
                           },
                         );
                       },

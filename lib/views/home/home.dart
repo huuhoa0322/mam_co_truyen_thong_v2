@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../domain/entities/dish.dart';
+import '../../viewmodels/recipe_details/recipe_details_view_model.dart';
+import '../main_screen.dart';
 import '../../viewmodels/home/home_view_model.dart';
 import 'widgets/featured_dishes.dart';
 import 'widgets/category_list.dart';
@@ -22,6 +25,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+
+  void _openDishDetails(Dish dish) {
+    context.read<RecipeDetailsViewModel>().loadByDish(dish);
+    MainScreen.switchTab(context, 1);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +66,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         _buildSearchBar(viewModel),
                         if (viewModel.filteredFeaturedDishes.isNotEmpty)
                           FeaturedDishesWidget(dishes: viewModel.filteredFeaturedDishes),
-                        CategoryListWidget(categories: viewModel.categories),
+                        CategoryListWidget(
+                          categories: viewModel.categories,
+                          onDishSelected: _openDishDetails,
+                        ),
                         if (viewModel.filteredRecentDishes.isNotEmpty)
                           NewDishesWidget(dishes: viewModel.filteredRecentDishes),
                       ],
